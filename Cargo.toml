@@ -1,0 +1,16 @@
+[package]
+name = "number-general"
+version = "0.1.0"
+authors = ["haydnv"]
+edition = "2018"
+description = "A generic number type for Rust which supports basic math and (de)serialization."
+license-file = "LICENSE"
+readme = "README.md"
+repository = "http://github.com/haydnv/number-general.git"
+
+categories = [""]
+keywords = ["number", "generic-number", "math", "mathematics"]
+
+[dependencies]
+safecast = "0.1"
+serde = "1.0"

@@ -1,2 +1,2 @@
 # number-general
-A generic Rust number type with support for basic math operations
+A generic Rust number type with support for basic math operations and (de)serialization.
