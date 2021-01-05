@@ -12,7 +12,7 @@ pub mod instance;
 pub use class::*;
 pub use instance::*;
 
-type _Complex<T> = num_complex::Complex<T>;
+type _Complex<T> = num::complex::Complex<T>;
 
 #[derive(Clone, Copy, Eq)]
 pub enum Number {
@@ -25,6 +25,7 @@ pub enum Number {
 
 impl NumberInstance for Number {
     type Abs = Number;
+    type Exp = Self;
     type Class = NumberType;
 
     fn class(&self) -> NumberType {
@@ -72,6 +73,26 @@ impl NumberInstance for Number {
             Float(f) => Float(f.abs()),
             Int(i) => Int(i.abs()),
             other => other,
+        }
+    }
+
+    fn pow(self, exp: Self) -> Self {
+        match (self, exp) {
+            (Self::Complex(this), Self::Complex(exp)) => this.pow(exp).into(),
+            (Self::Float(this), Self::Float(exp)) => this.pow(exp).into(),
+            (Self::Int(this), Self::UInt(exp)) => this.pow(exp).into(),
+            (Self::Int(this), Self::Int(that)) => {
+                // pow(Int, -Int) doesn't make sense, so cast to Float
+                Float::cast_from(this).pow(Float::cast_from(that)).into()
+            }
+            (Self::UInt(this), Self::UInt(exp)) => this.pow(exp).into(),
+            (Self::Bool(this), Self::Bool(exp)) => this.pow(exp).into(),
+            (this, exp) => {
+                let dtype = Ord::max(self.class(), exp.class());
+                let this = this.into_type(dtype);
+                let exp = exp.into_type(dtype);
+                this.pow(exp)
+            }
         }
     }
 }
@@ -551,10 +572,16 @@ mod tests {
             let zero = one.class().zero();
 
             assert_eq!(one, one.class().one());
+
             assert_eq!(two, one * two);
             assert_eq!(one, (one * two) - one);
             assert_eq!(two, (one * two) / one);
             assert_eq!(zero, one * zero);
+
+            assert_eq!(one, one.pow(zero));
+            assert_eq!(one * one, one.pow(two));
+            assert_eq!(two.pow(two), (one * two).pow(two));
+
             assert_eq!(f, one.not());
             assert_eq!(f, one.and(zero));
             assert_eq!(t, one.or(zero));

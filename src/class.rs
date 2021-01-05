@@ -31,6 +31,7 @@ pub trait NumberInstance:
     + Div<Output = Self>
 {
     type Abs: NumberInstance;
+    type Exp: NumberInstance;
     type Class: NumberClass<Instance = Self>;
 
     fn class(&self) -> Self::Class;
@@ -41,6 +42,8 @@ pub trait NumberInstance:
     ) -> <<Self as NumberInstance>::Class as NumberClass>::Instance;
 
     fn abs(self) -> Self::Abs;
+
+    fn pow(self, exp: Self::Exp) -> Self;
 
     fn and(self, other: Self) -> Self
     where

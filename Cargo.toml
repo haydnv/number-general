@@ -12,6 +12,6 @@ categories = [""]
 keywords = ["number", "generic-number", "math", "mathematics"]
 
 [dependencies]
-num-complex = "0.3"
+num = "0.3"
 safecast = "0.1"
 serde = { version = "1.0", features = ["derive"] }

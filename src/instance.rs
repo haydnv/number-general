@@ -7,12 +7,14 @@ use serde::ser::{Serialize, SerializeSeq, Serializer};
 
 use super::class::*;
 use super::{Number, _Complex};
+use num::traits::Pow;
 
 #[derive(Clone, Copy, PartialEq, PartialOrd)]
 pub struct Boolean(bool);
 
 impl NumberInstance for Boolean {
     type Abs = Self;
+    type Exp = Self;
     type Class = BooleanType;
 
     fn class(&self) -> BooleanType {
@@ -25,6 +27,14 @@ impl NumberInstance for Boolean {
 
     fn abs(self) -> Self {
         self
+    }
+
+    fn pow(self, exp: Self) -> Self {
+        if bool::from(exp) {
+            self
+        } else {
+            self.class().one()
+        }
     }
 
     fn and(self, other: Self) -> Self {
@@ -141,6 +151,7 @@ pub enum Complex {
 
 impl NumberInstance for Complex {
     type Abs = Float;
+    type Exp = Self;
     type Class = ComplexType;
 
     fn class(&self) -> ComplexType {
@@ -169,6 +180,15 @@ impl NumberInstance for Complex {
         match self {
             Self::C32(c) => Float::F32(c.norm_sqr()),
             Self::C64(c) => Float::F64(c.norm_sqr()),
+        }
+    }
+
+    fn pow(self, exp: Self) -> Self {
+        match (self, exp) {
+            (Self::C32(this), Self::C32(that)) => Self::C32(this.pow(that)),
+            (Self::C64(this), Self::C64(that)) => Self::C64(this.pow(that)),
+            (this, Self::C64(that)) => Self::C64(_Complex::<f64>::from(this).pow(that)),
+            (Self::C64(this), that) => Self::C64(this.pow(_Complex::<f64>::from(that))),
         }
     }
 }
@@ -393,6 +413,7 @@ pub enum Float {
 
 impl NumberInstance for Float {
     type Abs = Float;
+    type Exp = Self;
     type Class = FloatType;
 
     fn class(&self) -> FloatType {
@@ -421,6 +442,15 @@ impl NumberInstance for Float {
         match self {
             Self::F32(f) => Self::F32(f.abs()),
             Self::F64(f) => Self::F64(f.abs()),
+        }
+    }
+
+    fn pow(self, exp: Self) -> Self {
+        match (self, exp) {
+            (Self::F32(this), Self::F32(that)) => Self::F32(this.powf(that)),
+            (Self::F32(this), Self::F64(that)) => Self::F64((this as f64).powf(that)),
+            (Self::F64(this), Self::F32(that)) => Self::F64(this.powf(that as f64)),
+            (Self::F64(this), Self::F64(that)) => Self::F64(this.powf(that)),
         }
     }
 }
@@ -617,6 +647,7 @@ pub enum Int {
 
 impl NumberInstance for Int {
     type Abs = Self;
+    type Exp = UInt;
     type Class = IntType;
 
     fn class(&self) -> IntType {
@@ -654,6 +685,14 @@ impl NumberInstance for Int {
             Self::I16(i) => Int::I16(i.abs()),
             Self::I32(i) => Int::I32(i.abs()),
             Self::I64(i) => Int::I64(i.abs()),
+        }
+    }
+
+    fn pow(self, exp: Self::Exp) -> Self {
+        match (self, exp) {
+            (Self::I16(this), u) => Self::I16(this.pow(u.cast_into())),
+            (Self::I32(this), u) => Self::I32(this.pow(u.cast_into())),
+            (Self::I64(this), u) => Self::I64(this.pow(u.cast_into())),
         }
     }
 }
@@ -891,6 +930,7 @@ pub enum UInt {
 
 impl NumberInstance for UInt {
     type Abs = Self;
+    type Exp = Self;
     type Class = UIntType;
 
     fn class(&self) -> UIntType {
@@ -935,6 +975,15 @@ impl NumberInstance for UInt {
 
     fn abs(self) -> UInt {
         self
+    }
+
+    fn pow(self, exp: Self::Exp) -> Self {
+        match (self, exp) {
+            (Self::U8(this), that) => Self::U8(this.pow(that.cast_into())),
+            (Self::U16(this), that) => Self::U16(this.pow(that.cast_into())),
+            (Self::U32(this), that) => Self::U32(this.pow(that.cast_into())),
+            (Self::U64(this), that) => Self::U64(this.pow(that.cast_into())),
+        }
     }
 }
 
