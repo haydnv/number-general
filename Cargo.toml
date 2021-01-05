@@ -9,7 +9,7 @@ readme = "README.md"
 repository = "http://github.com/haydnv/number-general.git"
 
 categories = ["data-structures", "mathematics"]
-keywords = ["complex", "float", "int", "integer", "generic-number", "math", "mathematics", "number", "unsigned"]
+keywords = ["complex", "float", "integer", "number", "unsigned"]
 
 [dependencies]
 num = "0.3"
