@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use std::fmt;
 use std::iter::{Product, Sum};
-use std::ops::{Add, Div, Mul, Sub};
+use std::ops::*;
 
 use safecast::*;
 use serde::ser::{Serialize, SerializeSeq, Serializer};
@@ -86,10 +86,14 @@ impl Add for Boolean {
     type Output = Self;
 
     fn add(self, other: Self) -> Self::Output {
-        match (self, other) {
-            (Self(false), Self(false)) => Self(false),
-            _ => Self(true),
-        }
+        self.or(other)
+    }
+}
+
+impl AddAssign for Boolean {
+    fn add_assign(&mut self, other: Self) {
+        let sum = *self + other;
+        *self = sum;
     }
 }
 
@@ -97,10 +101,14 @@ impl Sub for Boolean {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self::Output {
-        match (self, other) {
-            (left, Self(false)) => left,
-            _ => Self(false),
-        }
+        self.xor(other)
+    }
+}
+
+impl SubAssign for Boolean {
+    fn sub_assign(&mut self, other: Self) {
+        let diff = *self - other;
+        *self = diff;
     }
 }
 
@@ -118,10 +126,14 @@ impl Mul for Boolean {
     type Output = Self;
 
     fn mul(self, other: Self) -> Self {
-        match (self, other) {
-            (Self(true), Self(true)) => Self(true),
-            _ => Self(false),
-        }
+        self.and(other)
+    }
+}
+
+impl MulAssign for Boolean {
+    fn mul_assign(&mut self, other: Self) {
+        let product = *self * other;
+        *self = product;
     }
 }
 
@@ -134,6 +146,13 @@ impl Div for Boolean {
         } else {
             self
         }
+    }
+}
+
+impl DivAssign for Boolean {
+    fn div_assign(&mut self, other: Self) {
+        let div = *self / other;
+        *self = div;
     }
 }
 
@@ -276,6 +295,13 @@ impl Add for Complex {
     }
 }
 
+impl AddAssign for Complex {
+    fn add_assign(&mut self, other: Self) {
+        let sum = *self + other;
+        *self = sum;
+    }
+}
+
 impl Sub for Complex {
     type Output = Self;
 
@@ -288,6 +314,13 @@ impl Sub for Complex {
                 Self::C64(l - r)
             }
         }
+    }
+}
+
+impl SubAssign for Complex {
+    fn sub_assign(&mut self, other: Self) {
+        let diff = *self - other;
+        *self = diff;
     }
 }
 
@@ -317,6 +350,13 @@ impl Mul for Complex {
     }
 }
 
+impl MulAssign for Complex {
+    fn mul_assign(&mut self, other: Self) {
+        let product = *self * other;
+        *self = product;
+    }
+}
+
 impl Div for Complex {
     type Output = Self;
 
@@ -333,6 +373,13 @@ impl Div for Complex {
                 Self::C64(l / r)
             }
         }
+    }
+}
+
+impl DivAssign for Complex {
+    fn div_assign(&mut self, other: Self) {
+        let div = *self / other;
+        *self = div;
     }
 }
 
@@ -569,6 +616,13 @@ impl Add for Float {
     }
 }
 
+impl AddAssign for Float {
+    fn add_assign(&mut self, other: Self) {
+        let sum = *self + other;
+        *self = sum;
+    }
+}
+
 impl Sub for Float {
     type Output = Self;
 
@@ -581,6 +635,13 @@ impl Sub for Float {
                 Self::F64(l - r)
             }
         }
+    }
+}
+
+impl SubAssign for Float {
+    fn sub_assign(&mut self, other: Self) {
+        let diff = *self - other;
+        *self = diff;
     }
 }
 
@@ -607,6 +668,13 @@ impl Mul for Float {
     }
 }
 
+impl MulAssign for Float {
+    fn mul_assign(&mut self, other: Self) {
+        let product = *self * other;
+        *self = product;
+    }
+}
+
 impl Div for Float {
     type Output = Self;
 
@@ -617,6 +685,13 @@ impl Div for Float {
             (Self::F32(l), Self::F64(r)) => Self::F64((l as f64) / r),
             (Self::F64(l), Self::F32(r)) => Self::F64(l / (r as f64)),
         }
+    }
+}
+
+impl DivAssign for Float {
+    fn div_assign(&mut self, other: Self) {
+        let div = *self / other;
+        *self = div;
     }
 }
 
@@ -870,6 +945,13 @@ impl Add for Int {
     }
 }
 
+impl AddAssign for Int {
+    fn add_assign(&mut self, other: Self) {
+        let sum = *self + other;
+        *self = sum;
+    }
+}
+
 impl Sub for Int {
     type Output = Self;
 
@@ -885,6 +967,13 @@ impl Sub for Int {
             (Self::I16(l), Self::I64(r)) => Self::I64(l as i64 - r),
             (Self::I32(l), Self::I64(r)) => Self::I64(l as i64 - r),
         }
+    }
+}
+
+impl SubAssign for Int {
+    fn sub_assign(&mut self, other: Self) {
+        let diff = *self - other;
+        *self = diff;
     }
 }
 
@@ -914,6 +1003,13 @@ impl Mul for Int {
     }
 }
 
+impl MulAssign for Int {
+    fn mul_assign(&mut self, other: Self) {
+        let product = *self * other;
+        *self = product;
+    }
+}
+
 impl Div for Int {
     type Output = Self;
 
@@ -931,6 +1027,13 @@ impl Div for Int {
             (Self::I16(l), Self::I32(r)) => Self::I32(l as i32 / r),
             (Self::I16(l), Self::I16(r)) => Self::I16(l / r),
         }
+    }
+}
+
+impl DivAssign for Int {
+    fn div_assign(&mut self, other: Self) {
+        let div = *self / other;
+        *self = div;
     }
 }
 
@@ -1221,6 +1324,13 @@ impl Add for UInt {
     }
 }
 
+impl AddAssign for UInt {
+    fn add_assign(&mut self, other: Self) {
+        let sum = *self + other;
+        *self = sum;
+    }
+}
+
 impl Sub for UInt {
     type Output = Self;
 
@@ -1248,6 +1358,13 @@ impl Sub for UInt {
                 UInt::U32(l - r as u32)
             }
         }
+    }
+}
+
+impl SubAssign for UInt {
+    fn sub_assign(&mut self, other: Self) {
+        let diff = *self - other;
+        *self = diff;
     }
 }
 
@@ -1281,6 +1398,13 @@ impl Mul for UInt {
     }
 }
 
+impl MulAssign for UInt {
+    fn mul_assign(&mut self, other: Self) {
+        let product = *self * other;
+        *self = product;
+    }
+}
+
 impl Div for UInt {
     type Output = Self;
 
@@ -1306,6 +1430,13 @@ impl Div for UInt {
             (UInt::U8(l), UInt::U16(r)) => UInt::U16(l as u16 / r),
             (UInt::U8(l), UInt::U8(r)) => UInt::U8(l / r),
         }
+    }
+}
+
+impl DivAssign for UInt {
+    fn div_assign(&mut self, other: Self) {
+        let div = *self / other;
+        *self = div;
     }
 }
 

@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use std::fmt;
 use std::iter::{Product, Sum};
-use std::ops::{Add, Div, Mul, Sub};
+use std::ops::*;
 
 use safecast::*;
 use serde::{Deserialize, Serialize};
@@ -29,9 +29,13 @@ pub trait NumberInstance:
     + From<Boolean>
     + Into<Number>
     + Add<Output = Self>
+    + AddAssign
     + Sub<Output = Self>
+    + SubAssign
     + Mul<Output = Self>
+    + MulAssign
     + Div<Output = Self>
+    + DivAssign
     + Product
     + Sum
     + fmt::Debug

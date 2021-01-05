@@ -17,7 +17,7 @@
 use std::cmp::Ordering;
 use std::fmt;
 use std::iter::{Product, Sum};
-use std::ops::{Add, Div, Mul, Sub};
+use std::ops::{Add, Div, Mul, Sub, AddAssign, SubAssign, MulAssign, DivAssign};
 
 use safecast::{CastFrom, CastInto};
 use serde::de::{self, SeqAccess, Visitor};
@@ -40,6 +40,16 @@ pub enum Number {
     Float(Float),
     Int(Int),
     UInt(UInt),
+}
+
+impl Number {
+    pub fn is_real(&self) -> bool {
+        if let Self::Complex(_) = self {
+            false
+        } else {
+            true
+        }
+    }
 }
 
 impl NumberInstance for Number {
@@ -195,6 +205,13 @@ impl Add for Number {
     }
 }
 
+impl AddAssign for Number {
+    fn add_assign(&mut self, other: Self) {
+        let sum = *self + other;
+        *self = sum;
+    }
+}
+
 impl Sub for Number {
     type Output = Self;
 
@@ -226,6 +243,13 @@ impl Sub for Number {
             }
             NT::Number => panic!("A number instance must have a specific type, not Number"),
         }
+    }
+}
+
+impl SubAssign for Number {
+    fn sub_assign(&mut self, other: Self) {
+        let difference = *self - other;
+        *self = difference;
     }
 }
 
@@ -273,6 +297,13 @@ impl Mul for Number {
     }
 }
 
+impl MulAssign for Number {
+    fn mul_assign(&mut self, other: Self) {
+        let product = *self * other;
+        *self = product;
+    }
+}
+
 impl Div for Number {
     type Output = Self;
 
@@ -304,6 +335,13 @@ impl Div for Number {
                 (this / other.cast_into()).into()
             }
         }
+    }
+}
+
+impl DivAssign for Number {
+    fn div_assign(&mut self, other: Self) {
+        let div = *self / other;
+        *self = div;
     }
 }
 
