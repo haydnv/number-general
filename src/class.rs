@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use super::instance::{Boolean, Complex, Float, Int, UInt};
 use super::{Number, _Complex};
 
-/// Trait to define common properties of numeric types supported by `Number`.
+/// Defines common properties of numeric types supported by [`Number`].
 pub trait NumberClass: Into<NumberType> + Ord + Send + fmt::Display {
     type Instance: NumberInstance;
 
@@ -20,7 +20,7 @@ pub trait NumberClass: Into<NumberType> + Ord + Send + fmt::Display {
     fn zero(&self) -> <Self as NumberClass>::Instance;
 }
 
-/// Trait to define common operations on numeric types supported by `Number`.
+/// Defines common operations on numeric types supported by [`Number`].
 pub trait NumberInstance:
     Copy
     + Default
@@ -41,10 +41,10 @@ pub trait NumberInstance:
     type Exp: NumberInstance;
     type Class: NumberClass<Instance = Self>;
 
-    /// Get an impl of `NumberClass` describing this number.
+    /// Get an impl of [`NumberClass`] describing this number.
     fn class(&self) -> Self::Class;
 
-    /// Cast this number into the specified `NumberClass`.
+    /// Cast this number into the specified [`NumberClass`].
     fn into_type(
         self,
         dtype: <Self as NumberInstance>::Class,
@@ -101,7 +101,7 @@ pub trait NumberInstance:
     }
 }
 
-/// The type of a `Complex` number.
+/// The type of a [`Complex`] number.
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Deserialize, Serialize)]
 pub enum ComplexType {
     C32,
@@ -181,7 +181,7 @@ impl fmt::Display for ComplexType {
     }
 }
 
-/// The type of a `Boolean`.
+/// The type of a [`Boolean`].
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Deserialize, Serialize)]
 pub struct BooleanType;
 
@@ -231,7 +231,7 @@ impl fmt::Display for BooleanType {
     }
 }
 
-/// The type of a `Float`.
+/// The type of a [`Float`].
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Deserialize, Serialize)]
 pub enum FloatType {
     F32,
@@ -312,7 +312,7 @@ impl fmt::Display for FloatType {
     }
 }
 
-/// The type of an `Int`.
+/// The type of an [`Int`].
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Deserialize, Serialize)]
 pub enum IntType {
     I16,
@@ -401,7 +401,7 @@ impl fmt::Display for IntType {
     }
 }
 
-/// The type of a `UInt`.
+/// The type of a [`UInt`].
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Deserialize, Serialize)]
 pub enum UIntType {
     U8,
@@ -500,7 +500,7 @@ impl fmt::Display for UIntType {
     }
 }
 
-/// The type of a generic `Number`.
+/// The type of a generic [`Number`].
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Deserialize, Serialize)]
 pub enum NumberType {
     Bool,
