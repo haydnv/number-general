@@ -3,14 +3,16 @@ use std::fmt;
 use std::ops::{Add, Div, Mul, Sub};
 
 use safecast::{CastFrom, CastInto};
+use serde::de::{self, SeqAccess, Visitor};
 use serde::ser::Serializer;
-use serde::Serialize;
+use serde::{Deserialize, Deserializer, Serialize};
 
 pub mod class;
 pub mod instance;
 
 pub use class::*;
 pub use instance::*;
+use serde::export::Formatter;
 
 type _Complex<T> = num::complex::Complex<T>;
 
@@ -512,6 +514,83 @@ impl CastFrom<Number> for usize {
     }
 }
 
+pub struct NumberVisitor;
+
+impl<'de> Visitor<'de> for NumberVisitor {
+    type Value = Number;
+
+    fn expecting(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "a Number, like 1 or -2 or 3.14 or [0., -1.414]")
+    }
+
+    fn visit_bool<E: de::Error>(self, b: bool) -> Result<Self::Value, E> {
+        Ok(Number::Bool(b.into()))
+    }
+
+    fn visit_i8<E: de::Error>(self, i: i8) -> Result<Self::Value, E> {
+        Ok(Number::Int(Int::I16(i as i16)))
+    }
+
+    fn visit_i16<E: de::Error>(self, i: i16) -> Result<Self::Value, E> {
+        Ok(Number::Int(Int::I16(i)))
+    }
+
+    fn visit_i32<E: de::Error>(self, i: i32) -> Result<Self::Value, E> {
+        Ok(Number::Int(Int::I32(i)))
+    }
+
+    fn visit_i64<E: de::Error>(self, i: i64) -> Result<Self::Value, E> {
+        Ok(Number::Int(Int::I64(i)))
+    }
+
+    fn visit_u8<E: de::Error>(self, u: u8) -> Result<Self::Value, E> {
+        Ok(Number::UInt(UInt::U8(u)))
+    }
+
+    fn visit_u16<E: de::Error>(self, u: u16) -> Result<Self::Value, E> {
+        Ok(Number::UInt(UInt::U16(u)))
+    }
+
+    fn visit_u32<E: de::Error>(self, u: u32) -> Result<Self::Value, E> {
+        Ok(Number::UInt(UInt::U32(u)))
+    }
+
+    fn visit_u64<E>(self, u: u64) -> Result<Self::Value, E> {
+        Ok(Number::UInt(UInt::U64(u)))
+    }
+
+    fn visit_f32<E>(self, f: f32) -> Result<Self::Value, E> {
+        Ok(Number::Float(Float::F32(f)))
+    }
+
+    fn visit_f64<E>(self, f: f64) -> Result<Self::Value, E> {
+        Ok(Number::Float(Float::F64(f)))
+    }
+
+    fn visit_seq<A: SeqAccess<'de>>(
+        self,
+        mut seq: A,
+    ) -> Result<Self::Value, <A as SeqAccess<'de>>::Error> {
+        let re = seq
+            .next_element()?
+            .ok_or_else(|| de::Error::custom("Complex number missing real component"))?;
+
+        let im = seq
+            .next_element()?
+            .ok_or_else(|| de::Error::custom("Complex number missing imaginary component"))?;
+
+        Ok(Number::Complex(Complex::C64(_Complex::<f64>::new(re, im))))
+    }
+}
+
+impl<'de> Deserialize<'de> for Number {
+    fn deserialize<D: Deserializer<'de>>(
+        deserializer: D,
+    ) -> Result<Self, <D as Deserializer<'de>>::Error> {
+        deserializer.deserialize_any(NumberVisitor)
+    }
+}
+
 impl Serialize for Number {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         match self {
@@ -586,6 +665,23 @@ mod tests {
             assert_eq!(f, one.and(zero));
             assert_eq!(t, one.or(zero));
             assert_eq!(t, one.xor(zero));
+        }
+    }
+
+    #[test]
+    fn test_serialize() {
+        let numbers = [
+            Number::from(false),
+            Number::from(12u16),
+            Number::from(-3),
+            Number::from(3.14),
+            Number::from(_Complex::<f32>::new(0., -1.414)),
+        ];
+
+        for number in &numbers {
+            let compare: Number =
+                serde_json::from_str(&serde_json::to_string(number).unwrap()).unwrap();
+            assert_eq!(number, &compare);
         }
     }
 }

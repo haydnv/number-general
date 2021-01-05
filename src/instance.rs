@@ -293,12 +293,11 @@ impl Div for Complex {
 
 impl PartialEq for Complex {
     fn eq(&self, other: &Self) -> bool {
-        type Max = _Complex<f64>;
-
         match (self, other) {
             (Self::C32(l), Self::C32(r)) => l.eq(r),
             (Self::C64(l), Self::C64(r)) => l.eq(r),
-            (l, r) => Max::from(*l).eq(&Max::from(*r)),
+            (Self::C64(l), Self::C32(r)) => l.re as f32 == r.re && l.im as f32 == r.im,
+            (l, r) => r.eq(l),
         }
     }
 }
@@ -548,7 +547,8 @@ impl PartialEq for Float {
         match (self, other) {
             (Self::F32(l), Self::F32(r)) => l.eq(r),
             (Self::F64(l), Self::F64(r)) => l.eq(r),
-            (l, r) => f64::from(*l).eq(&f64::from(*r)),
+            (Self::F64(l), Self::F32(r)) => (*l as f32).eq(r),
+            (l, r) => r.eq(l),
         }
     }
 }
