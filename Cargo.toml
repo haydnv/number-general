@@ -8,8 +8,8 @@ license-file = "LICENSE"
 readme = "README.md"
 repository = "http://github.com/haydnv/number-general.git"
 
-categories = [""]
-keywords = ["number", "generic-number", "math", "mathematics"]
+categories = ["data-structures", "mathematics"]
+keywords = ["complex", "float", "int", "integer", "generic-number", "math", "mathematics", "number", "unsigned"]
 
 [dependencies]
 num = "0.3"
