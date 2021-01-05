@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 use std::fmt;
+use std::iter::{Product, Sum};
 use std::ops::{Add, Div, Mul, Sub};
 
 use safecast::*;
@@ -8,7 +9,8 @@ use serde::{Deserialize, Serialize};
 use super::instance::{Boolean, Complex, Float, Int, UInt};
 use super::{Number, _Complex};
 
-pub trait NumberClass: Into<NumberType> + Ord + Send {
+/// Trait to define common properties of numeric types supported by `Number`.
+pub trait NumberClass: Into<NumberType> + Ord + Send + fmt::Display {
     type Instance: NumberInstance;
 
     fn size(self) -> usize;
@@ -18,6 +20,7 @@ pub trait NumberClass: Into<NumberType> + Ord + Send {
     fn zero(&self) -> <Self as NumberClass>::Instance;
 }
 
+/// Trait to define common operations on numeric types supported by `Number`.
 pub trait NumberInstance:
     Copy
     + Default
@@ -29,22 +32,31 @@ pub trait NumberInstance:
     + Sub<Output = Self>
     + Mul<Output = Self>
     + Div<Output = Self>
+    + Product
+    + Sum
+    + fmt::Debug
+    + fmt::Display
 {
     type Abs: NumberInstance;
     type Exp: NumberInstance;
     type Class: NumberClass<Instance = Self>;
 
+    /// Get an impl of `NumberClass` describing this number.
     fn class(&self) -> Self::Class;
 
+    /// Cast this number into the specified `NumberClass`.
     fn into_type(
         self,
         dtype: <Self as NumberInstance>::Class,
     ) -> <<Self as NumberInstance>::Class as NumberClass>::Instance;
 
+    /// Calculate the absolute value of this number.
     fn abs(self) -> Self::Abs;
 
+    /// Raise this number to the given exponent.
     fn pow(self, exp: Self::Exp) -> Self;
 
+    /// Return `true` if `self` and `other` are nonzero.
     fn and(self, other: Self) -> Self
     where
         Boolean: CastFrom<Self>,
@@ -54,6 +66,7 @@ pub trait NumberInstance:
             .into()
     }
 
+    /// Return `true` if this number is zero.
     fn not(self) -> Self
     where
         Boolean: CastFrom<Self>,
@@ -61,6 +74,7 @@ pub trait NumberInstance:
         Boolean::cast_from(self).not().into()
     }
 
+    /// Return `true` if `self` or `other` is nonzero.
     fn or(self, other: Self) -> Self
     where
         Boolean: CastFrom<Self>,
@@ -70,6 +84,7 @@ pub trait NumberInstance:
         this.or(that).into()
     }
 
+    /// Return `true` if exactly one of `self` and `other` is zero.
     fn xor(self, other: Self) -> Self
     where
         Self: CastInto<Boolean>,
@@ -86,6 +101,7 @@ pub trait NumberInstance:
     }
 }
 
+/// The type of a `Complex` number.
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Deserialize, Serialize)]
 pub enum ComplexType {
     C32,
@@ -151,6 +167,12 @@ impl From<ComplexType> for NumberType {
 
 impl fmt::Debug for ComplexType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
+}
+
+impl fmt::Display for ComplexType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::C32 => write!(f, "32-bit complex number"),
             Self::C64 => write!(f, "64-bit complex number"),
@@ -159,6 +181,7 @@ impl fmt::Debug for ComplexType {
     }
 }
 
+/// The type of a `Boolean`.
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Deserialize, Serialize)]
 pub struct BooleanType;
 
@@ -198,10 +221,17 @@ impl From<BooleanType> for NumberType {
 
 impl fmt::Debug for BooleanType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
+}
+
+impl fmt::Display for BooleanType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Boolean")
     }
 }
 
+/// The type of a `Float`.
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Deserialize, Serialize)]
 pub enum FloatType {
     F32,
@@ -267,6 +297,12 @@ impl From<FloatType> for NumberType {
 
 impl fmt::Debug for FloatType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
+}
+
+impl fmt::Display for FloatType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use FloatType::*;
         match self {
             F32 => write!(f, "32-bit float"),
@@ -276,6 +312,7 @@ impl fmt::Debug for FloatType {
     }
 }
 
+/// The type of an `Int`.
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Deserialize, Serialize)]
 pub enum IntType {
     I16,
@@ -349,16 +386,22 @@ impl From<IntType> for NumberType {
 
 impl fmt::Debug for IntType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use IntType::*;
+        fmt::Display::fmt(self, f)
+    }
+}
+
+impl fmt::Display for IntType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            I16 => write!(f, "16-bit int"),
-            I32 => write!(f, "32-bit int"),
-            I64 => write!(f, "64-bit int"),
-            Int => write!(f, "int"),
+            Self::I16 => write!(f, "16-bit integer"),
+            Self::I32 => write!(f, "32-bit integer"),
+            Self::I64 => write!(f, "64-bit integer"),
+            Self::Int => write!(f, "integer"),
         }
     }
 }
 
+/// The type of a `UInt`.
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Deserialize, Serialize)]
 pub enum UIntType {
     U8,
@@ -440,6 +483,12 @@ impl From<UIntType> for NumberType {
 
 impl fmt::Debug for UIntType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
+}
+
+impl fmt::Display for UIntType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use UIntType::*;
         match self {
             U8 => write!(f, "8-bit unsigned"),
@@ -451,6 +500,7 @@ impl fmt::Debug for UIntType {
     }
 }
 
+/// The type of a generic `Number`.
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Deserialize, Serialize)]
 pub enum NumberType {
     Bool,
@@ -543,6 +593,12 @@ impl PartialOrd for NumberType {
 }
 
 impl fmt::Debug for NumberType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
+}
+
+impl fmt::Display for NumberType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use NumberType::*;
         match self {

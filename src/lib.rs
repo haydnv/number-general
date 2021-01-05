@@ -1,5 +1,22 @@
+//! This crate provides a generic `Number` enum with `Bool`, `Complex`, `Float`, `Int`, and `UInt`
+//! variants.
+//! It supports casting with [`safecast`] and (de)serialization with [`serde`].
+//!
+//! Example usage:
+//! ```
+//! # use number_general::{Int, Number};
+//! # use safecast::CastFrom;
+//! let sequence: Vec<Number> = serde_json::from_str("[true, 2, 3.5, -4, [1.0, -0.5]]").unwrap();
+//! let actual = sequence.into_iter().product();
+//! let expected = Number::from(num::Complex::<f64>::new(-28., 14.));
+//!
+//! assert_eq!(expected, actual);
+//! assert_eq!(Int::cast_from(actual), Int::from(-28));
+//! ```
+
 use std::cmp::Ordering;
 use std::fmt;
+use std::iter::{Product, Sum};
 use std::ops::{Add, Div, Mul, Sub};
 
 use safecast::{CastFrom, CastInto};
@@ -7,15 +24,15 @@ use serde::de::{self, SeqAccess, Visitor};
 use serde::ser::Serializer;
 use serde::{Deserialize, Deserializer, Serialize};
 
-pub mod class;
-pub mod instance;
+mod class;
+mod instance;
 
 pub use class::*;
 pub use instance::*;
-use serde::export::Formatter;
 
 type _Complex<T> = num::complex::Complex<T>;
 
+/// A generic number.
 #[derive(Clone, Copy, Eq)]
 pub enum Number {
     Bool(Boolean),
@@ -212,6 +229,16 @@ impl Sub for Number {
     }
 }
 
+impl Sum for Number {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        let mut sum = NumberType::Number.zero();
+        for i in iter {
+            sum = sum + i;
+        }
+        sum
+    }
+}
+
 impl Mul for Number {
     type Output = Self;
 
@@ -277,6 +304,22 @@ impl Div for Number {
                 (this / other.cast_into()).into()
             }
         }
+    }
+}
+
+impl Product for Number {
+    fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
+        let zero = NumberType::Number.zero();
+        let mut product = NumberType::Number.one();
+
+        for i in iter {
+            if i == zero {
+                return zero;
+            }
+
+            product = product * i;
+        }
+        product
     }
 }
 
@@ -346,6 +389,12 @@ impl From<i64> for Number {
     }
 }
 
+impl From<Int> for Number {
+    fn from(i: Int) -> Number {
+        Number::Int(i)
+    }
+}
+
 impl From<f32> for Number {
     fn from(f: f32) -> Self {
         Self::Float(f.into())
@@ -361,12 +410,6 @@ impl From<f64> for Number {
 impl From<Float> for Number {
     fn from(f: Float) -> Number {
         Number::Float(f)
-    }
-}
-
-impl From<Int> for Number {
-    fn from(i: Int) -> Number {
-        Number::Int(i)
     }
 }
 
@@ -394,45 +437,6 @@ impl CastFrom<Number> for Boolean {
             false.into()
         } else {
             true.into()
-        }
-    }
-}
-
-impl CastFrom<Number> for Float {
-    fn cast_from(number: Number) -> Float {
-        use Number::*;
-        match number {
-            Bool(b) => Self::cast_from(b),
-            Complex(c) => Self::cast_from(c),
-            Float(f) => f,
-            Int(i) => Self::cast_from(i),
-            UInt(u) => Self::cast_from(u),
-        }
-    }
-}
-
-impl CastFrom<Number> for Int {
-    fn cast_from(number: Number) -> Int {
-        use Number::*;
-        match number {
-            Bool(b) => Self::cast_from(b),
-            Complex(c) => Self::cast_from(c),
-            Float(f) => Self::cast_from(f),
-            Int(i) => i,
-            UInt(u) => Self::cast_from(u),
-        }
-    }
-}
-
-impl CastFrom<Number> for UInt {
-    fn cast_from(number: Number) -> UInt {
-        use Number::*;
-        match number {
-            Bool(b) => Self::cast_from(b),
-            Complex(c) => Self::cast_from(c),
-            Float(f) => Self::cast_from(f),
-            Int(i) => Self::cast_from(i),
-            UInt(u) => u,
         }
     }
 }
@@ -466,6 +470,19 @@ impl CastFrom<Number> for f64 {
     }
 }
 
+impl CastFrom<Number> for Float {
+    fn cast_from(number: Number) -> Float {
+        use Number::*;
+        match number {
+            Bool(b) => Self::cast_from(b),
+            Complex(c) => Self::cast_from(c),
+            Float(f) => f,
+            Int(i) => Self::cast_from(i),
+            UInt(u) => Self::cast_from(u),
+        }
+    }
+}
+
 impl CastFrom<Number> for i16 {
     fn cast_from(n: Number) -> i16 {
         Int::cast_from(n).cast_into()
@@ -481,6 +498,19 @@ impl CastFrom<Number> for i32 {
 impl CastFrom<Number> for i64 {
     fn cast_from(n: Number) -> i64 {
         Int::cast_from(n).cast_into()
+    }
+}
+
+impl CastFrom<Number> for Int {
+    fn cast_from(number: Number) -> Int {
+        use Number::*;
+        match number {
+            Bool(b) => Self::cast_from(b),
+            Complex(c) => Self::cast_from(c),
+            Float(f) => Self::cast_from(f),
+            Int(i) => i,
+            UInt(u) => Self::cast_from(u),
+        }
     }
 }
 
@@ -514,12 +544,26 @@ impl CastFrom<Number> for usize {
     }
 }
 
+impl CastFrom<Number> for UInt {
+    fn cast_from(number: Number) -> UInt {
+        use Number::*;
+        match number {
+            Bool(b) => Self::cast_from(b),
+            Complex(c) => Self::cast_from(c),
+            Float(f) => Self::cast_from(f),
+            Int(i) => Self::cast_from(i),
+            UInt(u) => u,
+        }
+    }
+}
+
+/// A [`de::Visitor`] for deserializing a `Number`.
 pub struct NumberVisitor;
 
 impl<'de> Visitor<'de> for NumberVisitor {
     type Value = Number;
 
-    fn expecting(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "a Number, like 1 or -2 or 3.14 or [0., -1.414]")
     }
 
@@ -605,7 +649,7 @@ impl Serialize for Number {
 
 impl fmt::Debug for Number {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Display::fmt(self, f)
+        write!(f, "{}: {}", self.class(), self)
     }
 }
 

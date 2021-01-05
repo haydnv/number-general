@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 use std::fmt;
+use std::iter::{Product, Sum};
 use std::ops::{Add, Div, Mul, Sub};
 
 use safecast::*;
@@ -9,6 +10,7 @@ use super::class::*;
 use super::{Number, _Complex};
 use num::traits::Pow;
 
+/// A boolean value.
 #[derive(Clone, Copy, PartialEq, PartialOrd)]
 pub struct Boolean(bool);
 
@@ -102,6 +104,16 @@ impl Sub for Boolean {
     }
 }
 
+impl Sum for Boolean {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        let mut sum = Self(false);
+        for i in iter {
+            sum = sum + i;
+        }
+        sum
+    }
+}
+
 impl Mul for Boolean {
     type Output = Self;
 
@@ -125,9 +137,31 @@ impl Div for Boolean {
     }
 }
 
+impl Product for Boolean {
+    fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
+        let zero = Boolean(false);
+        let mut product = Boolean(true);
+
+        for i in iter {
+            if i == zero {
+                return zero;
+            }
+
+            product = product * i;
+        }
+        product
+    }
+}
+
 impl CastFrom<Boolean> for u64 {
     fn cast_from(b: Boolean) -> u64 {
         UInt::from(b).into()
+    }
+}
+
+impl fmt::Debug for Boolean {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}: {}", self.class(), self)
     }
 }
 
@@ -143,6 +177,7 @@ impl Serialize for Boolean {
     }
 }
 
+/// A complex number.
 #[derive(Clone, Copy)]
 pub enum Complex {
     C32(_Complex<f32>),
@@ -256,6 +291,16 @@ impl Sub for Complex {
     }
 }
 
+impl Sum for Complex {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        let mut sum = ComplexType::Complex.zero();
+        for i in iter {
+            sum = sum + i;
+        }
+        sum
+    }
+}
+
 impl Mul for Complex {
     type Output = Self;
 
@@ -288,6 +333,22 @@ impl Div for Complex {
                 Self::C64(l / r)
             }
         }
+    }
+}
+
+impl Product for Complex {
+    fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
+        let zero = ComplexType::Complex.zero();
+        let mut product = ComplexType::Complex.one();
+
+        for i in iter {
+            if i == zero {
+                return zero;
+            }
+
+            product = product * i;
+        }
+        product
     }
 }
 
@@ -395,6 +456,12 @@ impl Serialize for Complex {
     }
 }
 
+impl fmt::Debug for Complex {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}: {}", self.class(), self)
+    }
+}
+
 impl fmt::Display for Complex {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -404,6 +471,7 @@ impl fmt::Display for Complex {
     }
 }
 
+/// A floating-point number.
 #[derive(Clone, Copy)]
 pub enum Float {
     F32(f32),
@@ -516,6 +584,16 @@ impl Sub for Float {
     }
 }
 
+impl Sum for Float {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        let mut sum = FloatType::Float.zero();
+        for i in iter {
+            sum = sum + i;
+        }
+        sum
+    }
+}
+
 impl Mul for Float {
     type Output = Self;
 
@@ -539,6 +617,22 @@ impl Div for Float {
             (Self::F32(l), Self::F64(r)) => Self::F64((l as f64) / r),
             (Self::F64(l), Self::F32(r)) => Self::F64(l / (r as f64)),
         }
+    }
+}
+
+impl Product for Float {
+    fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
+        let zero = FloatType::Float.zero();
+        let mut product = FloatType::Float.one();
+
+        for i in iter {
+            if i == zero {
+                return zero;
+            }
+
+            product = product * i;
+        }
+        product
     }
 }
 
@@ -629,6 +723,12 @@ impl Serialize for Float {
     }
 }
 
+impl fmt::Debug for Float {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}: {}", self.class(), self)
+    }
+}
+
 impl fmt::Display for Float {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -638,6 +738,7 @@ impl fmt::Display for Float {
     }
 }
 
+/// A signed integer.
 #[derive(Clone, Copy)]
 pub enum Int {
     I16(i16),
@@ -787,6 +888,16 @@ impl Sub for Int {
     }
 }
 
+impl Sum for Int {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        let mut sum = IntType::Int.zero();
+        for i in iter {
+            sum = sum + i;
+        }
+        sum
+    }
+}
+
 impl Mul for Int {
     type Output = Self;
 
@@ -820,6 +931,22 @@ impl Div for Int {
             (Self::I16(l), Self::I32(r)) => Self::I32(l as i32 / r),
             (Self::I16(l), Self::I16(r)) => Self::I16(l / r),
         }
+    }
+}
+
+impl Product for Int {
+    fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
+        let zero = IntType::Int.zero();
+        let mut product = IntType::Int.one();
+
+        for i in iter {
+            if i == zero {
+                return zero;
+            }
+
+            product = product * i;
+        }
+        product
     }
 }
 
@@ -910,6 +1037,12 @@ impl Serialize for Int {
     }
 }
 
+impl fmt::Debug for Int {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}: {}", self.class(), self)
+    }
+}
+
 impl fmt::Display for Int {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -920,6 +1053,7 @@ impl fmt::Display for Int {
     }
 }
 
+/// An unsigned integer.
 #[derive(Clone, Copy)]
 pub enum UInt {
     U8(u8),
@@ -1117,6 +1251,16 @@ impl Sub for UInt {
     }
 }
 
+impl Sum for UInt {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        let mut sum = UIntType::UInt.zero();
+        for i in iter {
+            sum = sum + i;
+        }
+        sum
+    }
+}
+
 impl Mul for UInt {
     type Output = Self;
 
@@ -1162,6 +1306,22 @@ impl Div for UInt {
             (UInt::U8(l), UInt::U16(r)) => UInt::U16(l as u16 / r),
             (UInt::U8(l), UInt::U8(r)) => UInt::U8(l / r),
         }
+    }
+}
+
+impl Product for UInt {
+    fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
+        let zero = UIntType::UInt.zero();
+        let mut product = UIntType::UInt.one();
+
+        for i in iter {
+            if i == zero {
+                return zero;
+            }
+
+            product = product * i;
+        }
+        product
     }
 }
 
@@ -1282,6 +1442,12 @@ impl Serialize for UInt {
             UInt::U32(u) => s.serialize_u32(*u),
             UInt::U64(u) => s.serialize_u64(*u),
         }
+    }
+}
+
+impl fmt::Debug for UInt {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}: {}", self.class(), self)
     }
 }
 
