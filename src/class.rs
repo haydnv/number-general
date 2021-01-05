@@ -5,8 +5,8 @@ use std::ops::{Add, Div, Mul, Sub};
 use safecast::*;
 use serde::{Deserialize, Serialize};
 
-use super::_Complex;
-use super::instance::{Boolean, Complex, Float, Int, Number, UInt};
+use super::instance::{Boolean, Complex, Float, Int, UInt};
+use super::{Number, _Complex};
 
 pub trait NumberClass: Into<NumberType> + Ord + Send {
     type Instance: NumberInstance;
