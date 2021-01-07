@@ -513,6 +513,7 @@ impl fmt::Display for Complex {
     }
 }
 
+#[derive(Default)]
 pub struct ComplexCollator {
     float: FloatCollator,
 }
@@ -820,7 +821,8 @@ impl fmt::Display for Float {
     }
 }
 
-struct FloatCollator;
+#[derive(Default)]
+pub struct FloatCollator;
 
 impl Collate for FloatCollator {
     type Value = Float;
