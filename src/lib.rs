@@ -17,7 +17,7 @@
 use std::cmp::Ordering;
 use std::fmt;
 use std::iter::{Product, Sum};
-use std::ops::{Add, Div, Mul, Sub, AddAssign, SubAssign, MulAssign, DivAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
 use safecast::{CastFrom, CastInto};
 use serde::de::{self, SeqAccess, Visitor};
@@ -154,19 +154,12 @@ impl PartialOrd for Number {
             (Self::Bool(l), Self::Bool(r)) => l.partial_cmp(r),
             (Self::Complex(l), Self::Complex(r)) => l.partial_cmp(r),
 
-            (Self::Complex(l), r) => l.partial_cmp(&Complex::cast_from(*r)),
-            (Self::Float(l), r) => l.partial_cmp(&Float::cast_from(*r)),
-            (Self::Int(l), r) => l.partial_cmp(&Int::cast_from(*r)),
-            (Self::UInt(l), r) => l.partial_cmp(&UInt::cast_from(*r)),
-
-            (l, r) => match r.partial_cmp(l) {
-                Some(ordering) => Some(match ordering {
-                    Ordering::Less => Ordering::Greater,
-                    Ordering::Equal => Ordering::Equal,
-                    Ordering::Greater => Ordering::Less,
-                }),
-                None => None,
-            },
+            (l, r) => {
+                let dtype = Ord::max(l.class(), r.class());
+                let l = l.into_type(dtype);
+                let r = r.into_type(dtype);
+                l.partial_cmp(&r)
+            }
         }
     }
 }
@@ -708,7 +701,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_add() {
+    fn test_ops() {
         let ones = [
             Number::from(true),
             Number::from(1u8),
@@ -760,10 +753,11 @@ mod tests {
             Number::from(_Complex::<f32>::new(0., -1.414)),
         ];
 
-        for number in &numbers {
-            let compare: Number =
-                serde_json::from_str(&serde_json::to_string(number).unwrap()).unwrap();
-            assert_eq!(number, &compare);
+        for expected in &numbers {
+            let serialized = serde_json::to_string(expected).unwrap();
+            let actual = serde_json::from_str(&serialized).unwrap();
+
+            assert_eq!(expected, &actual);
         }
     }
 }

@@ -11,7 +11,7 @@ use super::{Number, _Complex};
 use num::traits::Pow;
 
 /// A boolean value.
-#[derive(Clone, Copy, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Ord, PartialEq, PartialOrd)]
 pub struct Boolean(bool);
 
 impl NumberInstance for Boolean {
@@ -727,7 +727,7 @@ impl PartialOrd for Float {
         match (self, other) {
             (Float::F32(l), Float::F32(r)) => l.partial_cmp(r),
             (Float::F64(l), Float::F64(r)) => l.partial_cmp(r),
-            _ => None,
+            (l, r) => f64::from(*l).partial_cmp(&f64::from(*r)),
         }
     }
 }
@@ -1067,11 +1067,17 @@ impl PartialEq for Int {
 
 impl PartialOrd for Int {
     fn partial_cmp(&self, other: &Int) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Int {
+    fn cmp(&self, other: &Self) -> Ordering {
         match (self, other) {
-            (Int::I16(l), Int::I16(r)) => l.partial_cmp(r),
-            (Int::I32(l), Int::I32(r)) => l.partial_cmp(r),
-            (Int::I64(l), Int::I64(r)) => l.partial_cmp(r),
-            _ => None,
+            (Int::I16(l), Int::I16(r)) => l.cmp(r),
+            (Int::I32(l), Int::I32(r)) => l.cmp(r),
+            (Int::I64(l), Int::I64(r)) => l.cmp(r),
+            (l, r) => i64::from(*l).cmp(&i64::from(*r)),
         }
     }
 }
@@ -1458,28 +1464,6 @@ impl Product for UInt {
 
 impl Eq for UInt {}
 
-impl Ord for UInt {
-    fn cmp(&self, other: &UInt) -> Ordering {
-        match (self, other) {
-            (UInt::U64(l), UInt::U64(r)) => l.cmp(r),
-            (UInt::U64(l), UInt::U32(r)) => l.cmp(&r.clone().into()),
-            (UInt::U64(l), UInt::U16(r)) => l.cmp(&r.clone().into()),
-            (UInt::U64(l), UInt::U8(r)) => l.cmp(&r.clone().into()),
-            (UInt::U32(l), UInt::U32(r)) => l.cmp(r),
-            (UInt::U32(l), UInt::U16(r)) => l.cmp(&r.clone().into()),
-            (UInt::U32(l), UInt::U8(r)) => l.cmp(&r.clone().into()),
-            (UInt::U16(l), UInt::U16(r)) => l.cmp(r),
-            (UInt::U16(l), UInt::U8(r)) => l.cmp(&r.clone().into()),
-            (UInt::U8(l), UInt::U8(r)) => l.cmp(r),
-            (l, r) => match r.cmp(l) {
-                Ordering::Greater => Ordering::Less,
-                Ordering::Less => Ordering::Greater,
-                Ordering::Equal => Ordering::Equal,
-            },
-        }
-    }
-}
-
 impl PartialEq for UInt {
     fn eq(&self, other: &UInt) -> bool {
         match (self, other) {
@@ -1494,12 +1478,18 @@ impl PartialEq for UInt {
 
 impl PartialOrd for UInt {
     fn partial_cmp(&self, other: &UInt) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for UInt {
+    fn cmp(&self, other: &UInt) -> Ordering {
         match (self, other) {
-            (Self::U8(l), Self::U8(r)) => l.partial_cmp(r),
-            (Self::U16(l), Self::U16(r)) => l.partial_cmp(r),
-            (Self::U32(l), Self::U32(r)) => l.partial_cmp(r),
-            (Self::U64(l), Self::U64(r)) => l.partial_cmp(r),
-            (l, r) => u64::from(*l).partial_cmp(&u64::from(*r)),
+            (Self::U8(l), Self::U8(r)) => l.cmp(r),
+            (Self::U16(l), Self::U16(r)) => l.cmp(r),
+            (Self::U32(l), Self::U32(r)) => l.cmp(r),
+            (Self::U64(l), Self::U64(r)) => l.cmp(r),
+            (l, r) => u64::from(*l).cmp(&u64::from(*r)),
         }
     }
 }
