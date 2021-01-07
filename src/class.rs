@@ -25,7 +25,6 @@ pub trait NumberInstance:
     Copy
     + Default
     + Sized
-    + PartialOrd
     + From<Boolean>
     + Into<Number>
     + Add<Output = Self>
@@ -91,17 +90,11 @@ pub trait NumberInstance:
     /// Return `true` if exactly one of `self` and `other` is zero.
     fn xor(self, other: Self) -> Self
     where
-        Self: CastInto<Boolean>,
+        Boolean: CastFrom<Self>,
     {
-        let zero = self.class().zero();
-
-        if self != zero && other == zero {
-            self
-        } else if self == zero && other != zero {
-            other
-        } else {
-            zero
-        }
+        let this = Boolean::cast_from(self);
+        let that = Boolean::cast_from(other);
+        this.xor(that).into()
     }
 }
 

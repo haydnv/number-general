@@ -12,6 +12,7 @@ categories = ["data-structures", "mathematics"]
 keywords = ["complex", "float", "integer", "number", "unsigned"]
 
 [dependencies]
+collate = "0.1"
 num = "0.2"
 safecast = "0.1"
 serde = { version = "1.0", features = ["derive"] }

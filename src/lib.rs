@@ -152,7 +152,8 @@ impl PartialOrd for Number {
             (Self::UInt(l), Self::UInt(r)) => l.partial_cmp(r),
             (Self::Float(l), Self::Float(r)) => l.partial_cmp(r),
             (Self::Bool(l), Self::Bool(r)) => l.partial_cmp(r),
-            (Self::Complex(l), Self::Complex(r)) => l.partial_cmp(r),
+            (Self::Complex(_), _) => None,
+            (_, Self::Complex(_)) => None,
 
             (l, r) => {
                 let dtype = Ord::max(l.class(), r.class());

@@ -3,12 +3,13 @@ use std::fmt;
 use std::iter::{Product, Sum};
 use std::ops::*;
 
+use collate::Collate;
+use num::traits::Pow;
 use safecast::*;
 use serde::ser::{Serialize, SerializeSeq, Serializer};
 
 use super::class::*;
 use super::{Number, _Complex};
-use num::traits::Pow;
 
 /// A boolean value.
 #[derive(Clone, Copy, Ord, PartialEq, PartialOrd)]
@@ -412,12 +413,6 @@ impl PartialEq for Complex {
 
 impl Eq for Complex {}
 
-impl PartialOrd for Complex {
-    fn partial_cmp(&self, other: &Complex) -> Option<Ordering> {
-        self.abs().partial_cmp(&other.abs())
-    }
-}
-
 impl Default for Complex {
     fn default() -> Complex {
         Complex::C32(_Complex::<f32>::default())
@@ -518,6 +513,18 @@ impl fmt::Display for Complex {
     }
 }
 
+pub struct ComplexCollator {
+    float: FloatCollator,
+}
+
+impl Collate for ComplexCollator {
+    type Value = Complex;
+
+    fn compare(&self, left: &Self::Value, right: &Self::Value) -> Ordering {
+        self.float.compare(&left.abs(), &right.abs())
+    }
+}
+
 /// A floating-point number.
 #[derive(Clone, Copy)]
 pub enum Float {
@@ -565,38 +572,6 @@ impl NumberInstance for Float {
             (Self::F32(this), Self::F64(that)) => Self::F64((this as f64).powf(that)),
             (Self::F64(this), Self::F32(that)) => Self::F64(this.powf(that as f64)),
             (Self::F64(this), Self::F64(that)) => Self::F64(this.powf(that)),
-        }
-    }
-}
-
-impl CastFrom<Complex> for Float {
-    fn cast_from(c: Complex) -> Float {
-        use Complex::*;
-        match c {
-            C32(c) => Self::F32(c.re),
-            C64(c) => Self::F64(c.re),
-        }
-    }
-}
-
-impl CastFrom<Float> for Boolean {
-    fn cast_from(f: Float) -> Boolean {
-        use Float::*;
-        let b = match f {
-            F32(f) if f == 0f32 => false,
-            F64(f) if f == 0f64 => false,
-            _ => true,
-        };
-
-        Boolean(b)
-    }
-}
-
-impl CastFrom<Float> for f32 {
-    fn cast_from(f: Float) -> f32 {
-        match f {
-            Float::F32(f) => f,
-            Float::F64(f) => f as f32,
         }
     }
 }
@@ -780,6 +755,38 @@ impl From<UInt> for Float {
     }
 }
 
+impl CastFrom<Complex> for Float {
+    fn cast_from(c: Complex) -> Float {
+        use Complex::*;
+        match c {
+            C32(c) => Self::F32(c.re),
+            C64(c) => Self::F64(c.re),
+        }
+    }
+}
+
+impl CastFrom<Float> for Boolean {
+    fn cast_from(f: Float) -> Boolean {
+        use Float::*;
+        let b = match f {
+            F32(f) if f == 0f32 => false,
+            F64(f) if f == 0f64 => false,
+            _ => true,
+        };
+
+        Boolean(b)
+    }
+}
+
+impl CastFrom<Float> for f32 {
+    fn cast_from(f: Float) -> f32 {
+        match f {
+            Float::F32(f) => f,
+            Float::F64(f) => f as f32,
+        }
+    }
+}
+
 impl From<Float> for f64 {
     fn from(f: Float) -> f64 {
         match f {
@@ -809,6 +816,31 @@ impl fmt::Display for Float {
         match self {
             Float::F32(n) => fmt::Display::fmt(n, f),
             Float::F64(n) => fmt::Display::fmt(n, f),
+        }
+    }
+}
+
+struct FloatCollator;
+
+impl Collate for FloatCollator {
+    type Value = Float;
+
+    fn compare(&self, left: &Self::Value, right: &Self::Value) -> Ordering {
+        if let Some(order) = left.partial_cmp(right) {
+            order
+        } else {
+            let left = f32::cast_from(*left);
+            let right = f32::cast_from(*right);
+
+            if left == right {
+                Ordering::Equal
+            } else if left == f32::NEG_INFINITY || right == f32::INFINITY {
+                Ordering::Less
+            } else if left == f32::INFINITY || right == f32::NEG_INFINITY {
+                Ordering::Greater
+            } else {
+                panic!("No collation defined between {} and {}", left, right)
+            }
         }
     }
 }
