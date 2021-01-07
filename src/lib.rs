@@ -1,6 +1,8 @@
-//! This crate provides a generic `Number` enum with `Bool`, `Complex`, `Float`, `Int`, and `UInt`
-//! variants.
-//! It supports casting with [`safecast`] and (de)serialization with [`serde`].
+//! Provides a generic [`Number`] enum with [`Boolean`], [`Complex`], [`Float`], [`Int`],
+//! and [`UInt`] variants, as well as a [`NumberCollator`], [`ComplexCollator`], and
+//! [`FloatCollator`] since these types do not implement [`Ord`].
+//!
+//! `Number` supports casting with [`safecast`] and (de)serialization with [`serde`].
 //!
 //! Example usage:
 //! ```
@@ -17,7 +19,7 @@
 use std::cmp::Ordering;
 use std::fmt;
 use std::iter::{Product, Sum};
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::ops::*;
 
 use collate::*;
 use safecast::{CastFrom, CastInto};
@@ -28,7 +30,6 @@ use serde::{Deserialize, Deserializer, Serialize};
 mod class;
 mod instance;
 
-use crate::FloatCollator;
 pub use class::*;
 pub use instance::*;
 
@@ -591,8 +592,9 @@ impl CastFrom<Number> for UInt {
     }
 }
 
+/// Defines a collation order for [`Number`].
 #[derive(Default)]
-struct NumberCollator {
+pub struct NumberCollator {
     bool: Collator<Boolean>,
     complex: ComplexCollator,
     float: FloatCollator,
