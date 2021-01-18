@@ -21,9 +21,12 @@ use std::fmt;
 use std::iter::{Product, Sum};
 use std::ops::*;
 
+use async_trait::async_trait;
 use collate::*;
+use destream::de::{Decoder, Error as DestreamError, FromStream};
+use destream::en::ToStream;
 use safecast::{CastFrom, CastInto};
-use serde::de::{self, SeqAccess, Visitor};
+use serde::de::Error as SerdeError;
 use serde::ser::Serializer;
 use serde::{Deserialize, Deserializer, Serialize};
 
@@ -31,6 +34,7 @@ mod class;
 mod instance;
 
 pub use class::*;
+use destream::Encoder;
 pub use instance::*;
 
 type _Complex<T> = num::complex::Complex<T>;
@@ -622,71 +626,223 @@ impl Collate for NumberCollator {
     }
 }
 
-/// A [`de::Visitor`] for deserializing a `Number`.
+/// A structure for deserializing a `Number` which implements
+/// [`serde::de::Visitor`] and [`destream::de::Visitor`].
 pub struct NumberVisitor;
 
-impl<'de> Visitor<'de> for NumberVisitor {
-    type Value = Number;
-
-    fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl NumberVisitor {
+    fn expecting(f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "a Number, like 1 or -2 or 3.14 or [0., -1.414]")
     }
 
-    fn visit_bool<E: de::Error>(self, b: bool) -> Result<Self::Value, E> {
+    #[inline]
+    fn bool<E>(self, b: bool) -> Result<Number, E> {
         Ok(Number::Bool(b.into()))
     }
 
-    fn visit_i8<E: de::Error>(self, i: i8) -> Result<Self::Value, E> {
+    #[inline]
+    fn i8<E>(self, i: i8) -> Result<Number, E> {
         Ok(Number::Int(Int::I16(i as i16)))
     }
 
-    fn visit_i16<E: de::Error>(self, i: i16) -> Result<Self::Value, E> {
+    #[inline]
+    fn i16<E>(self, i: i16) -> Result<Number, E> {
         Ok(Number::Int(Int::I16(i)))
     }
 
-    fn visit_i32<E: de::Error>(self, i: i32) -> Result<Self::Value, E> {
+    #[inline]
+    fn i32<E>(self, i: i32) -> Result<Number, E> {
         Ok(Number::Int(Int::I32(i)))
     }
 
-    fn visit_i64<E: de::Error>(self, i: i64) -> Result<Self::Value, E> {
+    #[inline]
+    fn i64<E>(self, i: i64) -> Result<Number, E> {
         Ok(Number::Int(Int::I64(i)))
     }
 
-    fn visit_u8<E: de::Error>(self, u: u8) -> Result<Self::Value, E> {
+    #[inline]
+    fn u8<E>(self, u: u8) -> Result<Number, E> {
         Ok(Number::UInt(UInt::U8(u)))
     }
 
-    fn visit_u16<E: de::Error>(self, u: u16) -> Result<Self::Value, E> {
+    #[inline]
+    fn u16<E>(self, u: u16) -> Result<Number, E> {
         Ok(Number::UInt(UInt::U16(u)))
     }
 
-    fn visit_u32<E: de::Error>(self, u: u32) -> Result<Self::Value, E> {
+    #[inline]
+    fn u32<E>(self, u: u32) -> Result<Number, E> {
         Ok(Number::UInt(UInt::U32(u)))
     }
 
-    fn visit_u64<E>(self, u: u64) -> Result<Self::Value, E> {
+    #[inline]
+    fn u64<E>(self, u: u64) -> Result<Number, E> {
         Ok(Number::UInt(UInt::U64(u)))
     }
 
-    fn visit_f32<E>(self, f: f32) -> Result<Self::Value, E> {
+    #[inline]
+    fn f32<E>(self, f: f32) -> Result<Number, E> {
         Ok(Number::Float(Float::F32(f)))
     }
 
-    fn visit_f64<E>(self, f: f64) -> Result<Self::Value, E> {
+    #[inline]
+    fn f64<E>(self, f: f64) -> Result<Number, E> {
         Ok(Number::Float(Float::F64(f)))
     }
+}
 
-    fn visit_seq<A: SeqAccess<'de>>(
-        self,
-        mut seq: A,
-    ) -> Result<Self::Value, <A as SeqAccess<'de>>::Error> {
+impl<'de> serde::de::Visitor<'de> for NumberVisitor {
+    type Value = Number;
+
+    fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        NumberVisitor::expecting(f)
+    }
+
+    #[inline]
+    fn visit_bool<E: SerdeError>(self, b: bool) -> Result<Self::Value, E> {
+        self.bool(b)
+    }
+
+    #[inline]
+    fn visit_i8<E: SerdeError>(self, i: i8) -> Result<Self::Value, E> {
+        self.i8(i)
+    }
+
+    #[inline]
+    fn visit_i16<E: SerdeError>(self, i: i16) -> Result<Self::Value, E> {
+        self.i16(i)
+    }
+
+    #[inline]
+    fn visit_i32<E: SerdeError>(self, i: i32) -> Result<Self::Value, E> {
+        Ok(Number::Int(Int::I32(i)))
+    }
+
+    #[inline]
+    fn visit_i64<E: SerdeError>(self, i: i64) -> Result<Self::Value, E> {
+        self.i64(i)
+    }
+
+    #[inline]
+    fn visit_u8<E: SerdeError>(self, u: u8) -> Result<Self::Value, E> {
+        self.u8(u)
+    }
+
+    #[inline]
+    fn visit_u16<E: SerdeError>(self, u: u16) -> Result<Self::Value, E> {
+        self.u16(u)
+    }
+
+    #[inline]
+    fn visit_u32<E: SerdeError>(self, u: u32) -> Result<Self::Value, E> {
+        self.u32(u)
+    }
+
+    #[inline]
+    fn visit_u64<E>(self, u: u64) -> Result<Self::Value, E> {
+        self.u64(u)
+    }
+
+    #[inline]
+    fn visit_f32<E>(self, f: f32) -> Result<Self::Value, E> {
+        self.f32(f)
+    }
+
+    #[inline]
+    fn visit_f64<E>(self, f: f64) -> Result<Self::Value, E> {
+        self.f64(f)
+    }
+
+    #[inline]
+    fn visit_seq<A: serde::de::SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
         let re = seq
             .next_element()?
-            .ok_or_else(|| de::Error::custom("Complex number missing real component"))?;
+            .ok_or_else(|| SerdeError::custom("Complex number missing real component"))?;
 
         let im = seq
             .next_element()?
-            .ok_or_else(|| de::Error::custom("Complex number missing imaginary component"))?;
+            .ok_or_else(|| SerdeError::custom("Complex number missing imaginary component"))?;
+
+        Ok(Number::Complex(Complex::C64(_Complex::<f64>::new(re, im))))
+    }
+}
+
+#[async_trait]
+impl destream::de::Visitor for NumberVisitor {
+    type Value = Number;
+
+    fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        Self::expecting(f)
+    }
+
+    #[inline]
+    fn visit_bool<E: DestreamError>(self, b: bool) -> Result<Self::Value, E> {
+        self.bool(b)
+    }
+
+    #[inline]
+    fn visit_i8<E: DestreamError>(self, i: i8) -> Result<Self::Value, E> {
+        self.i8(i)
+    }
+
+    #[inline]
+    fn visit_i16<E: DestreamError>(self, i: i16) -> Result<Self::Value, E> {
+        self.i16(i)
+    }
+
+    #[inline]
+    fn visit_i32<E: DestreamError>(self, i: i32) -> Result<Self::Value, E> {
+        self.i32(i)
+    }
+
+    #[inline]
+    fn visit_i64<E: DestreamError>(self, i: i64) -> Result<Self::Value, E> {
+        self.i64(i)
+    }
+
+    #[inline]
+    fn visit_u8<E: DestreamError>(self, u: u8) -> Result<Self::Value, E> {
+        self.u8(u)
+    }
+
+    #[inline]
+    fn visit_u16<E: DestreamError>(self, u: u16) -> Result<Self::Value, E> {
+        self.u16(u)
+    }
+
+    #[inline]
+    fn visit_u32<E: DestreamError>(self, u: u32) -> Result<Self::Value, E> {
+        self.u32(u)
+    }
+
+    #[inline]
+    fn visit_u64<E: DestreamError>(self, u: u64) -> Result<Self::Value, E> {
+        self.u64(u)
+    }
+
+    #[inline]
+    fn visit_f32<E: DestreamError>(self, f: f32) -> Result<Self::Value, E> {
+        self.f32(f)
+    }
+
+    #[inline]
+    fn visit_f64<E: DestreamError>(self, f: f64) -> Result<Self::Value, E> {
+        self.f64(f)
+    }
+
+    async fn visit_seq<A: destream::de::SeqAccess>(
+        self,
+        mut seq: A,
+    ) -> Result<Self::Value, A::Error> {
+        let re = seq
+            .next_element()
+            .await?
+            .ok_or_else(|| DestreamError::custom("Complex number missing real component"))?;
+
+        let im = seq
+            .next_element()
+            .await?
+            .ok_or_else(|| DestreamError::custom("Complex number missing imaginary component"))?;
 
         Ok(Number::Complex(Complex::C64(_Complex::<f64>::new(re, im))))
     }
@@ -700,6 +856,13 @@ impl<'de> Deserialize<'de> for Number {
     }
 }
 
+#[async_trait]
+impl FromStream for Number {
+    async fn from_stream<D: Decoder>(decoder: &mut D) -> Result<Self, <D as Decoder>::Error> {
+        decoder.decode_any(NumberVisitor).await
+    }
+}
+
 impl Serialize for Number {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         match self {
@@ -708,6 +871,18 @@ impl Serialize for Number {
             Number::Float(f) => f.serialize(s),
             Number::Int(i) => i.serialize(s),
             Number::UInt(u) => u.serialize(s),
+        }
+    }
+}
+
+impl<'en> ToStream<'en> for Number {
+    fn to_stream<E: Encoder<'en>>(&'en self, e: E) -> Result<E::Ok, E::Error> {
+        match self {
+            Number::Bool(b) => b.to_stream(e),
+            Number::Complex(c) => c.to_stream(e),
+            Number::Float(f) => f.to_stream(e),
+            Number::Int(i) => i.to_stream(e),
+            Number::UInt(u) => u.to_stream(e),
         }
     }
 }
@@ -732,6 +907,10 @@ impl fmt::Display for Number {
 
 #[cfg(test)]
 mod tests {
+    use futures::executor::block_on;
+    use futures::future;
+    use futures::stream::{self, StreamExt};
+
     use super::*;
 
     #[test]
@@ -817,5 +996,28 @@ mod tests {
 
             assert_eq!(expected, &actual);
         }
+    }
+
+    #[test]
+    fn test_encode() {
+        let numbers = vec![
+            Number::from(false),
+            Number::from(12u16),
+            Number::from(-3),
+            Number::from(3.14),
+            Number::from(_Complex::<f32>::new(0., -1.414)),
+        ];
+
+        let encoded = destream_json::encode(&numbers)
+            .unwrap()
+            .map(|r| r.unwrap())
+            .fold(vec![], |mut s, c| {
+                s.extend(c);
+                future::ready(s)
+            });
+
+        let deserialized: Vec<Number> =
+            block_on(destream_json::decode(stream::once(encoded))).unwrap();
+        assert_eq!(deserialized, numbers);
     }
 }

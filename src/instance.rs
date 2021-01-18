@@ -4,6 +4,7 @@ use std::iter::{Product, Sum};
 use std::ops::*;
 
 use collate::Collate;
+use destream::{EncodeSeq, Encoder, ToStream};
 use num::traits::Pow;
 use safecast::*;
 use serde::ser::{Serialize, SerializeSeq, Serializer};
@@ -194,6 +195,12 @@ impl fmt::Display for Boolean {
 impl Serialize for Boolean {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         s.serialize_bool(self.0)
+    }
+}
+
+impl<'en> ToStream<'en> for Boolean {
+    fn to_stream<E: Encoder<'en>>(&'en self, e: E) -> Result<E::Ok, E::Error> {
+        e.encode_bool(self.0)
     }
 }
 
@@ -492,6 +499,25 @@ impl Serialize for Complex {
                 let mut seq = s.serialize_seq(Some(2))?;
                 seq.serialize_element(&c.re)?;
                 seq.serialize_element(&c.im)?;
+                seq.end()
+            }
+        }
+    }
+}
+
+impl<'en> ToStream<'en> for Complex {
+    fn to_stream<E: Encoder<'en>>(&'en self, e: E) -> Result<E::Ok, E::Error> {
+        match self {
+            Complex::C32(c) => {
+                let mut seq = e.encode_seq(Some(2))?;
+                seq.encode_element(&c.re)?;
+                seq.encode_element(&c.im)?;
+                seq.end()
+            }
+            Complex::C64(c) => {
+                let mut seq = e.encode_seq(Some(2))?;
+                seq.encode_element(&c.re)?;
+                seq.encode_element(&c.im)?;
                 seq.end()
             }
         }
@@ -803,6 +829,15 @@ impl Serialize for Float {
         match self {
             Float::F32(f) => s.serialize_f32(*f),
             Float::F64(f) => s.serialize_f64(*f),
+        }
+    }
+}
+
+impl<'en> ToStream<'en> for Float {
+    fn to_stream<E: Encoder<'en>>(&'en self, e: E) -> Result<E::Ok, E::Error> {
+        match self {
+            Float::F32(f) => e.encode_f32(*f),
+            Float::F64(f) => e.encode_f64(*f),
         }
     }
 }
@@ -1178,6 +1213,16 @@ impl Serialize for Int {
             Int::I16(i) => s.serialize_i16(*i),
             Int::I32(i) => s.serialize_i32(*i),
             Int::I64(i) => s.serialize_i64(*i),
+        }
+    }
+}
+
+impl<'en> ToStream<'en> for Int {
+    fn to_stream<E: Encoder<'en>>(&'en self, e: E) -> Result<E::Ok, E::Error> {
+        match self {
+            Int::I16(i) => e.encode_i16(*i),
+            Int::I32(i) => e.encode_i32(*i),
+            Int::I64(i) => e.encode_i64(*i),
         }
     }
 }
@@ -1598,6 +1643,17 @@ impl Serialize for UInt {
             UInt::U16(u) => s.serialize_u16(*u),
             UInt::U32(u) => s.serialize_u32(*u),
             UInt::U64(u) => s.serialize_u64(*u),
+        }
+    }
+}
+
+impl<'en> ToStream<'en> for UInt {
+    fn to_stream<E: Encoder<'en>>(&'en self, e: E) -> Result<E::Ok, E::Error> {
+        match self {
+            UInt::U8(u) => e.encode_u8(*u),
+            UInt::U16(u) => e.encode_u16(*u),
+            UInt::U32(u) => e.encode_u32(*u),
+            UInt::U64(u) => e.encode_u64(*u),
         }
     }
 }
