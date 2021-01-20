@@ -24,7 +24,7 @@ use std::ops::*;
 use async_trait::async_trait;
 use collate::*;
 use destream::de::{Decoder, Error as DestreamError, FromStream};
-use destream::en::ToStream;
+use destream::en::{IntoStream, ToStream};
 use safecast::{CastFrom, CastInto};
 use serde::de::Error as SerdeError;
 use serde::ser::Serializer;
@@ -883,6 +883,18 @@ impl<'en> ToStream<'en> for Number {
             Number::Float(f) => f.to_stream(e),
             Number::Int(i) => i.to_stream(e),
             Number::UInt(u) => u.to_stream(e),
+        }
+    }
+}
+
+impl<'en> IntoStream<'en> for Number {
+    fn into_stream<E: Encoder<'en>>(self, e: E) -> Result<E::Ok, E::Error> {
+        match self {
+            Number::Bool(b) => b.into_stream(e),
+            Number::Complex(c) => c.into_stream(e),
+            Number::Float(f) => f.into_stream(e),
+            Number::Int(i) => i.into_stream(e),
+            Number::UInt(u) => u.into_stream(e),
         }
     }
 }
