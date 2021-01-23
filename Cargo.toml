@@ -1,6 +1,6 @@
 [package]
 name = "number-general"
-version = "0.1.6"
+version = "0.1.7"
 authors = ["haydnv"]
 edition = "2018"
 description = "A generic number type for Rust which supports basic math and (de)serialization."
@@ -9,7 +9,7 @@ readme = "README.md"
 repository = "http://github.com/haydnv/number-general.git"
 
 categories = ["data-structures", "mathematics"]
-keywords = ["complex", "float", "integer", "number", "unsigned"]
+keywords = ["number", "complex", "float", "integer", "unsigned"]
 
 [dependencies]
 async-trait = "0.1"

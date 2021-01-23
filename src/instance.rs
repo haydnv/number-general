@@ -261,6 +261,26 @@ impl NumberInstance for Complex {
     }
 }
 
+impl CastFrom<[f32; 2]> for Complex {
+    fn cast_from(arr: [f32; 2]) -> Self {
+        Self::C32(num::Complex::new(arr[0], arr[1]))
+    }
+}
+
+impl CastFrom<[f64; 2]> for Complex {
+    fn cast_from(arr: [f64; 2]) -> Self {
+        Self::C64(num::Complex::new(arr[0], arr[1]))
+    }
+}
+
+impl<R, I> CastFrom<(R, I)> for Complex where R: CastInto<f64>, I: CastInto<f64> {
+    fn cast_from(value: (R, I)) -> Self {
+        let re = value.0.cast_into();
+        let im = value.1.cast_into();
+        Self::C64(num::Complex::new(re, im))
+    }
+}
+
 impl CastFrom<Number> for Complex {
     fn cast_from(number: Number) -> Complex {
         use Number::*;
@@ -860,7 +880,10 @@ impl Serialize for Float {
 
 impl<'en> ToStream<'en> for Float {
     fn to_stream<E: Encoder<'en>>(&'en self, e: E) -> Result<E::Ok, E::Error> {
-        self.into_stream(e)
+        match *self {
+            Float::F32(f) => e.encode_f32(f),
+            Float::F64(f) => e.encode_f64(f),
+        }
     }
 }
 
@@ -1250,7 +1273,11 @@ impl Serialize for Int {
 
 impl<'en> ToStream<'en> for Int {
     fn to_stream<E: Encoder<'en>>(&'en self, e: E) -> Result<E::Ok, E::Error> {
-        self.into_stream(e)
+        match *self {
+            Int::I16(i) => e.encode_i16(i),
+            Int::I32(i) => e.encode_i32(i),
+            Int::I64(i) => e.encode_i64(i),
+        }
     }
 }
 
@@ -1686,7 +1713,12 @@ impl Serialize for UInt {
 
 impl<'en> ToStream<'en> for UInt {
     fn to_stream<E: Encoder<'en>>(&'en self, e: E) -> Result<E::Ok, E::Error> {
-        self.into_stream(e)
+        match *self {
+            UInt::U8(u) => e.encode_u8(u),
+            UInt::U16(u) => e.encode_u16(u),
+            UInt::U32(u) => e.encode_u32(u),
+            UInt::U64(u) => e.encode_u64(u),
+        }
     }
 }
 
