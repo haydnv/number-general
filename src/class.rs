@@ -10,7 +10,7 @@ use super::instance::{Boolean, Complex, Float, Int, UInt};
 use super::{Number, _Complex};
 
 /// Defines common properties of numeric types supported by [`Number`].
-pub trait NumberClass: Into<NumberType> + Ord + Send + fmt::Display {
+pub trait NumberClass: Default + Into<NumberType> + Ord + Send + fmt::Display {
     type Instance: NumberInstance;
 
     fn size(self) -> usize;
@@ -106,6 +106,12 @@ pub enum ComplexType {
     Complex,
 }
 
+impl Default for ComplexType {
+    fn default() -> Self {
+        Self::Complex
+    }
+}
+
 impl NumberClass for ComplexType {
     type Instance = Complex;
 
@@ -179,7 +185,7 @@ impl fmt::Display for ComplexType {
 }
 
 /// The type of a [`Boolean`].
-#[derive(Clone, Copy, Hash, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Copy, Default, Hash, Eq, PartialEq, Deserialize, Serialize)]
 pub struct BooleanType;
 
 impl NumberClass for BooleanType {
@@ -234,6 +240,12 @@ pub enum FloatType {
     F32,
     F64,
     Float,
+}
+
+impl Default for FloatType {
+    fn default() -> Self {
+        Self::Float
+    }
 }
 
 impl NumberClass for FloatType {
@@ -316,6 +328,12 @@ pub enum IntType {
     I32,
     I64,
     Int,
+}
+
+impl Default for IntType {
+    fn default() -> Self {
+        Self::Int
+    }
 }
 
 impl NumberClass for IntType {
@@ -406,6 +424,12 @@ pub enum UIntType {
     U32,
     U64,
     UInt,
+}
+
+impl Default for UIntType {
+    fn default() -> Self {
+        Self::UInt
+    }
 }
 
 impl NumberClass for UIntType {
@@ -506,6 +530,12 @@ pub enum NumberType {
     Int(IntType),
     UInt(UIntType),
     Number,
+}
+
+impl Default for NumberType {
+    fn default() -> Self {
+        Self::Number
+    }
 }
 
 impl NumberType {

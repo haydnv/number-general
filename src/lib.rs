@@ -844,7 +844,11 @@ impl destream::de::Visitor for NumberVisitor {
             .await?
             .ok_or_else(|| DestreamError::custom("Complex number missing imaginary component"))?;
 
-        Ok(Number::Complex(Complex::C64(_Complex::<f64>::new(re, im))))
+        if let Some(next) = seq.next_element::<f64>().await? {
+            Err(DestreamError::invalid_type(next, &"end of sequence"))
+        } else {
+            Ok(Number::Complex(Complex::C64(_Complex::<f64>::new(re, im))))
+        }
     }
 }
 

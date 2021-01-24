@@ -273,7 +273,11 @@ impl CastFrom<[f64; 2]> for Complex {
     }
 }
 
-impl<R, I> CastFrom<(R, I)> for Complex where R: CastInto<f64>, I: CastInto<f64> {
+impl<R, I> CastFrom<(R, I)> for Complex
+where
+    R: CastInto<f64>,
+    I: CastInto<f64>,
+{
     fn cast_from(value: (R, I)) -> Self {
         let re = value.0.cast_into();
         let im = value.1.cast_into();
