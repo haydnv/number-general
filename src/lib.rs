@@ -39,6 +39,8 @@ pub use instance::*;
 
 type _Complex<T> = num::complex::Complex<T>;
 
+const EXPECTING: &str = "a Number, like 1 or -2 or 3.14 or [0., -1.414]";
+
 /// A generic number.
 #[derive(Clone, Copy, Eq)]
 pub enum Number {
@@ -631,10 +633,6 @@ impl Collate for NumberCollator {
 pub struct NumberVisitor;
 
 impl NumberVisitor {
-    fn expecting(f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "a Number, like 1 or -2 or 3.14 or [0., -1.414]")
-    }
-
     #[inline]
     fn bool<E>(self, b: bool) -> Result<Number, E> {
         Ok(Number::Bool(b.into()))
@@ -695,7 +693,7 @@ impl<'de> serde::de::Visitor<'de> for NumberVisitor {
     type Value = Number;
 
     fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        NumberVisitor::expecting(f)
+        f.write_str(EXPECTING)
     }
 
     #[inline]
@@ -771,8 +769,8 @@ impl<'de> serde::de::Visitor<'de> for NumberVisitor {
 impl destream::de::Visitor for NumberVisitor {
     type Value = Number;
 
-    fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        Self::expecting(f)
+    fn expecting() -> &'static str {
+        EXPECTING
     }
 
     #[inline]
@@ -835,20 +833,16 @@ impl destream::de::Visitor for NumberVisitor {
         mut seq: A,
     ) -> Result<Self::Value, A::Error> {
         let re = seq
-            .next_element()
+            .next_element(())
             .await?
             .ok_or_else(|| DestreamError::custom("Complex number missing real component"))?;
 
         let im = seq
-            .next_element()
+            .next_element(())
             .await?
             .ok_or_else(|| DestreamError::custom("Complex number missing imaginary component"))?;
 
-        if let Some(next) = seq.next_element::<f64>().await? {
-            Err(DestreamError::invalid_type(next, &"end of sequence"))
-        } else {
-            Ok(Number::Complex(Complex::C64(_Complex::<f64>::new(re, im))))
-        }
+        Ok(Number::Complex(Complex::C64(_Complex::<f64>::new(re, im))))
     }
 }
 
@@ -862,7 +856,12 @@ impl<'de> Deserialize<'de> for Number {
 
 #[async_trait]
 impl FromStream for Number {
-    async fn from_stream<D: Decoder>(decoder: &mut D) -> Result<Self, <D as Decoder>::Error> {
+    type Context = ();
+
+    async fn from_stream<D: Decoder>(
+        _context: (),
+        decoder: &mut D,
+    ) -> Result<Self, <D as Decoder>::Error> {
         decoder.decode_any(NumberVisitor).await
     }
 }
@@ -1033,7 +1032,7 @@ mod tests {
             });
 
         let deserialized: Vec<Number> =
-            block_on(destream_json::decode(stream::once(encoded))).unwrap();
+            block_on(destream_json::decode((), stream::once(encoded))).unwrap();
         assert_eq!(deserialized, numbers);
     }
 }
