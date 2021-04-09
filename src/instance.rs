@@ -589,7 +589,7 @@ impl fmt::Display for Complex {
 }
 
 /// Defines a collation order for [`Complex`].
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct ComplexCollator {
     float: FloatCollator,
 }
@@ -916,7 +916,7 @@ impl fmt::Display for Float {
 }
 
 /// Defines a collation order for [`Float`].
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct FloatCollator;
 
 impl Collate for FloatCollator {

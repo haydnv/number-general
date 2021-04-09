@@ -599,7 +599,7 @@ impl CastFrom<Number> for UInt {
 }
 
 /// Defines a collation order for [`Number`].
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct NumberCollator {
     bool: Collator<Boolean>,
     complex: ComplexCollator,
@@ -628,8 +628,8 @@ impl Collate for NumberCollator {
     }
 }
 
-/// A structure for deserializing a `Number` which implements
-/// [`serde::de::Visitor`] and [`destream::de::Visitor`].
+/// A struct for deserializing a `Number` which implements
+/// [`destream::de::Visitor`] and [`serde::de::Visitor`].
 pub struct NumberVisitor;
 
 impl NumberVisitor {
