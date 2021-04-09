@@ -13,6 +13,8 @@ use super::{Number, _Complex};
 pub trait NumberClass: Default + Into<NumberType> + Ord + Send + fmt::Display {
     type Instance: NumberInstance;
 
+    fn cast(&self, n: Number) -> Self::Instance;
+
     fn size(self) -> usize;
 
     fn one(&self) -> <Self as NumberClass>::Instance;
@@ -115,6 +117,13 @@ impl Default for ComplexType {
 impl NumberClass for ComplexType {
     type Instance = Complex;
 
+    fn cast(&self, n: Number) -> Complex {
+        match self {
+            Self::C32 => Complex::C32(n.cast_into()),
+            _ => Complex::C64(n.cast_into()),
+        }
+    }
+
     fn size(self) -> usize {
         match self {
             Self::C32 => 8,
@@ -191,6 +200,10 @@ pub struct BooleanType;
 impl NumberClass for BooleanType {
     type Instance = Boolean;
 
+    fn cast(&self, n: Number) -> Boolean {
+        n.cast_into()
+    }
+
     fn size(self) -> usize {
         1
     }
@@ -250,6 +263,13 @@ impl Default for FloatType {
 
 impl NumberClass for FloatType {
     type Instance = Float;
+
+    fn cast(&self, n: Number) -> Float {
+        match self {
+            Self::F32 => Float::F32(n.cast_into()),
+            _ => Float::F64(n.cast_into()),
+        }
+    }
 
     fn size(self) -> usize {
         match self {
@@ -338,6 +358,14 @@ impl Default for IntType {
 
 impl NumberClass for IntType {
     type Instance = Int;
+
+    fn cast(&self, n: Number) -> Int {
+        match self {
+            Self::I16 => Int::I16(n.cast_into()),
+            Self::I32 => Int::I32(n.cast_into()),
+            _ => Int::I64(n.cast_into()),
+        }
+    }
 
     fn size(self) -> usize {
         match self {
@@ -434,6 +462,15 @@ impl Default for UIntType {
 
 impl NumberClass for UIntType {
     type Instance = UInt;
+
+    fn cast(&self, n: Number) -> UInt {
+        match self {
+            Self::U8 => UInt::U8(n.cast_into()),
+            Self::U16 => UInt::U16(n.cast_into()),
+            Self::U32 => UInt::U32(n.cast_into()),
+            _ => UInt::U64(n.cast_into()),
+        }
+    }
 
     fn size(self) -> usize {
         match self {
@@ -532,20 +569,31 @@ pub enum NumberType {
     Number,
 }
 
-impl Default for NumberType {
-    fn default() -> Self {
-        Self::Number
-    }
-}
-
 impl NumberType {
     pub fn uint64() -> Self {
         NumberType::UInt(UIntType::U64)
     }
 }
 
+impl Default for NumberType {
+    fn default() -> Self {
+        Self::Number
+    }
+}
+
 impl NumberClass for NumberType {
     type Instance = Number;
+
+    fn cast(&self, n: Number) -> Number {
+        match self {
+            Self::Bool => Number::Bool(n.cast_into()),
+            Self::Complex(ct) => Number::Complex(ct.cast(n)),
+            Self::Float(ft) => Number::Float(ft.cast(n)),
+            Self::Int(it) => Number::Int(it.cast(n)),
+            Self::UInt(ut) => Number::UInt(ut.cast(n)),
+            Self::Number => n,
+        }
+    }
 
     fn size(self) -> usize {
         use NumberType::*;
