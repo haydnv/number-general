@@ -13,7 +13,7 @@ use super::class::*;
 use super::{Number, _Complex};
 
 /// A boolean value.
-#[derive(Clone, Copy, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Boolean(bool);
 
 impl NumberInstance for Boolean {
