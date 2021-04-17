@@ -344,6 +344,7 @@ impl fmt::Display for FloatType {
 /// The type of an [`Int`].
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Deserialize, Serialize)]
 pub enum IntType {
+    I8,
     I16,
     I32,
     I64,
@@ -369,6 +370,7 @@ impl NumberClass for IntType {
 
     fn size(self) -> usize {
         match self {
+            Self::I8 => 1,
             Self::I16 => 2,
             Self::I32 => 4,
             Self::I64 => 8,
@@ -378,6 +380,7 @@ impl NumberClass for IntType {
 
     fn one(&self) -> Int {
         match self {
+            Self::I8 => 1i8.into(),
             Self::I16 => 1i16.into(),
             Self::I32 => 1i32.into(),
             Self::I64 => 1i64.into(),
@@ -387,6 +390,7 @@ impl NumberClass for IntType {
 
     fn zero(&self) -> Int {
         match self {
+            Self::I8 => 0i8.into(),
             Self::I16 => 0i16.into(),
             Self::I32 => 0i32.into(),
             Self::I64 => 0i64.into(),
@@ -398,10 +402,7 @@ impl NumberClass for IntType {
 impl Ord for IntType {
     fn cmp(&self, other: &Self) -> Ordering {
         match (self, other) {
-            (Self::I16, Self::I16) => Ordering::Equal,
-            (Self::I32, Self::I32) => Ordering::Equal,
-            (Self::I64, Self::I64) => Ordering::Equal,
-            (Self::Int, Self::Int) => Ordering::Equal,
+            (this, that) if this == that => Ordering::Equal,
 
             (Self::Int, _) => Ordering::Greater,
             (_, Self::Int) => Ordering::Less,
@@ -409,8 +410,13 @@ impl Ord for IntType {
             (Self::I64, _) => Ordering::Greater,
             (_, Self::I64) => Ordering::Less,
 
-            (Self::I16, _) => Ordering::Less,
-            (_, Self::I16) => Ordering::Greater,
+            (Self::I32, _) => Ordering::Greater,
+            (_, Self::I32) => Ordering::Less,
+
+            (Self::I16, _) => Ordering::Greater,
+            (_, Self::I16) => Ordering::Less,
+
+            (Self::I8, _) => Ordering::Less,
         }
     }
 }
@@ -436,6 +442,7 @@ impl fmt::Debug for IntType {
 impl fmt::Display for IntType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            Self::I8 => write!(f, "8-bit integer"),
             Self::I16 => write!(f, "16-bit integer"),
             Self::I32 => write!(f, "32-bit integer"),
             Self::I64 => write!(f, "64-bit integer"),

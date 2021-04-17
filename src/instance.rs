@@ -477,6 +477,7 @@ impl From<Float> for Complex {
 impl From<Int> for Complex {
     fn from(i: Int) -> Self {
         match i {
+            Int::I8(i) => Self::C32(_Complex::new(i as f32, 0.0f32)),
             Int::I64(i) => Self::C64(_Complex::new(i as f64, 0.0f64)),
             Int::I32(i) => Self::C32(_Complex::new(i as f32, 0.0f32)),
             Int::I16(i) => Self::C32(_Complex::new(i as f32, 0.0f32)),
@@ -814,6 +815,7 @@ impl From<f64> for Float {
 impl From<Int> for Float {
     fn from(i: Int) -> Self {
         match i {
+            Int::I8(i) => Self::F32(i as f32),
             Int::I64(i) => Self::F64(i as f64),
             Int::I32(i) => Self::F32(i as f32),
             Int::I16(i) => Self::F32(i as f32),
@@ -945,6 +947,7 @@ impl Collate for FloatCollator {
 /// A signed integer.
 #[derive(Clone, Copy)]
 pub enum Int {
+    I8(i8),
     I16(i16),
     I32(i32),
     I64(i64),
@@ -957,6 +960,7 @@ impl NumberInstance for Int {
 
     fn class(&self) -> IntType {
         match self {
+            Self::I8(_) => IntType::I8,
             Self::I16(_) => IntType::I16,
             Self::I32(_) => IntType::I32,
             Self::I64(_) => IntType::I64,
@@ -966,17 +970,26 @@ impl NumberInstance for Int {
     fn into_type(self, dtype: IntType) -> Int {
         use IntType::*;
         match dtype {
+            I8 => match self {
+                Self::I16(i) => Self::I8(i as i8),
+                Self::I32(i) => Self::I8(i as i8),
+                Self::I64(i) => Self::I8(i as i8),
+                this => this,
+            },
             I16 => match self {
+                Self::I8(i) => Self::I16(i as i16),
                 Self::I32(i) => Self::I16(i as i16),
                 Self::I64(i) => Self::I16(i as i16),
                 this => this,
             },
             I32 => match self {
+                Self::I8(i) => Self::I32(i as i32),
                 Self::I16(i) => Self::I32(i as i32),
                 Self::I64(i) => Self::I32(i as i32),
                 this => this,
             },
             I64 => match self {
+                Self::I8(i) => Self::I64(i as i64),
                 Self::I16(i) => Self::I64(i as i64),
                 Self::I32(i) => Self::I64(i as i64),
                 this => this,
@@ -987,6 +1000,7 @@ impl NumberInstance for Int {
 
     fn abs(self) -> Self {
         match self {
+            Self::I8(i) => Int::I8(i.abs()),
             Self::I16(i) => Int::I16(i.abs()),
             Self::I32(i) => Int::I32(i.abs()),
             Self::I64(i) => Int::I64(i.abs()),
@@ -995,6 +1009,7 @@ impl NumberInstance for Int {
 
     fn pow(self, exp: Self::Exp) -> Self {
         match (self, exp) {
+            (Self::I8(this), u) => Self::I8(this.pow(u.cast_into())),
             (Self::I16(this), u) => Self::I16(this.pow(u.cast_into())),
             (Self::I32(this), u) => Self::I32(this.pow(u.cast_into())),
             (Self::I64(this), u) => Self::I64(this.pow(u.cast_into())),
@@ -1039,6 +1054,7 @@ impl CastFrom<Int> for Boolean {
 impl CastFrom<Int> for i16 {
     fn cast_from(i: Int) -> i16 {
         match i {
+            Int::I8(i) => i as i16,
             Int::I16(i) => i,
             Int::I32(i) => i as i16,
             Int::I64(i) => i as i16,
@@ -1049,6 +1065,7 @@ impl CastFrom<Int> for i16 {
 impl CastFrom<Int> for i32 {
     fn cast_from(i: Int) -> i32 {
         match i {
+            Int::I8(i) => i as i32,
             Int::I16(i) => i as i32,
             Int::I32(i) => i,
             Int::I64(i) => i as i32,
@@ -1066,9 +1083,13 @@ impl Add for Int {
             (Self::I64(l), Self::I64(r)) => Self::I64(l + r),
             (Self::I64(l), Self::I32(r)) => Self::I64(l + r as i64),
             (Self::I64(l), Self::I16(r)) => Self::I64(l + r as i64),
+            (Self::I64(l), Self::I8(r)) => Self::I64(l + r as i64),
             (Self::I32(l), Self::I32(r)) => Self::I32(l + r),
             (Self::I32(l), Self::I16(r)) => Self::I32(l + r as i32),
+            (Self::I32(l), Self::I8(r)) => Self::I32(l + r as i32),
             (Self::I16(l), Self::I16(r)) => Self::I16(l + r),
+            (Self::I16(l), Self::I8(r)) => Self::I16(l + r as i16),
+            (Self::I8(l), Self::I8(r)) => Self::I8(l + r),
             (l, r) => r + l,
         }
     }
@@ -1089,12 +1110,19 @@ impl Sub for Int {
             (Self::I64(l), Self::I64(r)) => Self::I64(l - r),
             (Self::I64(l), Self::I32(r)) => Self::I64(l - r as i64),
             (Self::I64(l), Self::I16(r)) => Self::I64(l - r as i64),
+            (Self::I64(l), Self::I8(r)) => Self::I64(l - r as i64),
+            (Self::I32(l), Self::I64(r)) => Self::I64(l as i64 - r),
             (Self::I32(l), Self::I32(r)) => Self::I32(l - r),
             (Self::I32(l), Self::I16(r)) => Self::I32(l - r as i32),
-            (Self::I16(l), Self::I16(r)) => Self::I16(l - r),
-            (Self::I16(l), Self::I32(r)) => Self::I32(l as i32 - r),
+            (Self::I32(l), Self::I8(r)) => Self::I32(l - r as i32),
             (Self::I16(l), Self::I64(r)) => Self::I64(l as i64 - r),
-            (Self::I32(l), Self::I64(r)) => Self::I64(l as i64 - r),
+            (Self::I16(l), Self::I32(r)) => Self::I32(l as i32 - r),
+            (Self::I16(l), Self::I16(r)) => Self::I16(l - r),
+            (Self::I16(l), Self::I8(r)) => Self::I16(l - r as i16),
+            (Self::I8(l), Self::I64(r)) => Self::I64(l as i64 - r),
+            (Self::I8(l), Self::I32(r)) => Self::I32(l as i32 - r),
+            (Self::I8(l), Self::I16(r)) => Self::I16(l as i16 - r),
+            (Self::I8(l), Self::I8(r)) => Self::I8(l - r),
         }
     }
 }
@@ -1147,14 +1175,22 @@ impl Div for Int {
             (Self::I64(l), Self::I64(r)) => Self::I64(l / r),
             (Self::I64(l), Self::I32(r)) => Self::I64(l / r as i64),
             (Self::I64(l), Self::I16(r)) => Self::I64(l / r as i64),
+            (Self::I64(l), Self::I8(r)) => Self::I64(l / r as i64),
 
             (Self::I32(l), Self::I64(r)) => Self::I64(l as i64 / r),
             (Self::I32(l), Self::I32(r)) => Self::I32(l / r),
             (Self::I32(l), Self::I16(r)) => Self::I32(l / r as i32),
+            (Self::I32(l), Self::I8(r)) => Self::I32(l / r as i32),
 
             (Self::I16(l), Self::I64(r)) => Self::I64(l as i64 / r),
             (Self::I16(l), Self::I32(r)) => Self::I32(l as i32 / r),
             (Self::I16(l), Self::I16(r)) => Self::I16(l / r),
+            (Self::I16(l), Self::I8(r)) => Self::I16(l / r as i16),
+
+            (Self::I8(l), Self::I64(r)) => Self::I64(l as i64 / r),
+            (Self::I8(l), Self::I32(r)) => Self::I32(l as i32 / r),
+            (Self::I8(l), Self::I16(r)) => Self::I16(l as i16 / r),
+            (Self::I8(l), Self::I8(r)) => Self::I8(l / r),
         }
     }
 }
@@ -1217,6 +1253,12 @@ impl Default for Int {
     }
 }
 
+impl From<i8> for Int {
+    fn from(i: i8) -> Int {
+        Int::I8(i)
+    }
+}
+
 impl From<i16> for Int {
     fn from(i: i16) -> Int {
         Int::I16(i)
@@ -1258,6 +1300,7 @@ impl From<Boolean> for Int {
 impl From<Int> for i64 {
     fn from(i: Int) -> i64 {
         match i {
+            Int::I8(i) => i as i64,
             Int::I16(i) => i as i64,
             Int::I32(i) => i as i64,
             Int::I64(i) => i,
@@ -1268,6 +1311,7 @@ impl From<Int> for i64 {
 impl Serialize for Int {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         match self {
+            Int::I8(i) => s.serialize_i8(*i),
             Int::I16(i) => s.serialize_i16(*i),
             Int::I32(i) => s.serialize_i32(*i),
             Int::I64(i) => s.serialize_i64(*i),
@@ -1278,6 +1322,7 @@ impl Serialize for Int {
 impl<'en> ToStream<'en> for Int {
     fn to_stream<E: Encoder<'en>>(&'en self, e: E) -> Result<E::Ok, E::Error> {
         match *self {
+            Int::I8(i) => e.encode_i8(i),
             Int::I16(i) => e.encode_i16(i),
             Int::I32(i) => e.encode_i32(i),
             Int::I64(i) => e.encode_i64(i),
@@ -1288,6 +1333,7 @@ impl<'en> ToStream<'en> for Int {
 impl<'en> IntoStream<'en> for Int {
     fn into_stream<E: Encoder<'en>>(self, e: E) -> Result<E::Ok, E::Error> {
         match self {
+            Int::I8(i) => e.encode_i8(i),
             Int::I16(i) => e.encode_i16(i),
             Int::I32(i) => e.encode_i32(i),
             Int::I64(i) => e.encode_i64(i),
@@ -1304,6 +1350,7 @@ impl fmt::Debug for Int {
 impl fmt::Display for Int {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            Int::I8(i) => fmt::Display::fmt(i, f),
             Int::I16(i) => fmt::Display::fmt(i, f),
             Int::I32(i) => fmt::Display::fmt(i, f),
             Int::I64(i) => fmt::Display::fmt(i, f),
@@ -1403,6 +1450,7 @@ impl CastFrom<Int> for UInt {
     fn cast_from(i: Int) -> UInt {
         use Int::*;
         match i {
+            I8(i) => Self::U8(i as u8),
             I16(i) => Self::U16(i as u16),
             I32(i) => Self::U32(i as u32),
             I64(i) => Self::U64(i as u64),
