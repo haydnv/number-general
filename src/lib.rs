@@ -42,7 +42,7 @@ type _Complex<T> = num::complex::Complex<T>;
 const EXPECTING: &str = "a Number, like 1 or -2 or 3.14 or [0., -1.414]";
 
 /// A generic number.
-#[derive(Clone, Copy, Eq)]
+#[derive(Clone, Copy, Eq, Hash)]
 pub enum Number {
     Bool(Boolean),
     Complex(Complex),

@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 use std::fmt;
+use std::hash::{Hash, Hasher};
 use std::iter::{Product, Sum};
 use std::ops::*;
 
@@ -450,6 +451,21 @@ impl PartialEq for Complex {
 
 impl Eq for Complex {}
 
+impl Hash for Complex {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match self {
+            Self::C32(c) => {
+                Float::F32(c.re).hash(state);
+                Float::F32(c.im).hash(state);
+            }
+            Self::C64(c) => {
+                Float::F64(c.re).hash(state);
+                Float::F64(c.im).hash(state);
+            }
+        }
+    }
+}
+
 impl Default for Complex {
     fn default() -> Complex {
         Complex::C32(_Complex::<f32>::default())
@@ -764,6 +780,15 @@ impl Product for Float {
     }
 }
 
+impl Hash for Float {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match self {
+            Self::F32(f) => f.to_be_bytes().hash(state),
+            Self::F64(f) => f.to_be_bytes().hash(state),
+        }
+    }
+}
+
 impl PartialEq for Float {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
@@ -945,7 +970,7 @@ impl Collate for FloatCollator {
 }
 
 /// A signed integer.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Hash)]
 pub enum Int {
     I8(i8),
     I16(i16),
@@ -1359,7 +1384,7 @@ impl fmt::Display for Int {
 }
 
 /// An unsigned integer.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Hash)]
 pub enum UInt {
     U8(u8),
     U16(u16),
