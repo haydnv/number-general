@@ -412,6 +412,12 @@ impl From<UInt> for Number {
     }
 }
 
+impl From<i8> for Number {
+    fn from(i: i8) -> Self {
+        Self::Int(i.into())
+    }
+}
+
 impl From<i16> for Number {
     fn from(i: i16) -> Self {
         Self::Int(i.into())
