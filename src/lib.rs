@@ -928,8 +928,9 @@ impl fmt::Display for Number {
 
 #[cfg(test)]
 mod tests {
+    use bytes::Bytes;
     use futures::executor::block_on;
-    use futures::future;
+    use futures::future::{self, FutureExt};
     use futures::stream::{self, StreamExt};
 
     use super::*;
@@ -1035,10 +1036,12 @@ mod tests {
             .fold(vec![], |mut s, c| {
                 s.extend(c);
                 future::ready(s)
-            });
+            })
+            .map(Bytes::from);
 
         let deserialized: Vec<Number> =
             block_on(destream_json::decode((), stream::once(encoded))).unwrap();
+
         assert_eq!(deserialized, numbers);
     }
 }
