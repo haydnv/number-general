@@ -1,12 +1,12 @@
 [package]
 name = "number-general"
-version = "0.3.7"
-authors = ["haydnv"]
+version = "0.3.8"
+authors = ["haydn@tinychain.net"]
 edition = "2018"
 description = "A generic number type for Rust which supports basic math and (de)serialization."
 license = "Apache-2.0"
 readme = "README.md"
-repository = "http://github.com/haydnv/number-general.git"
+repository = "https://github.com/haydnv/number-general.git"
 
 categories = ["data-structures", "mathematics"]
 keywords = ["number", "complex", "float", "integer", "unsigned"]
@@ -14,13 +14,13 @@ keywords = ["number", "complex", "float", "integer", "unsigned"]
 [dependencies]
 async-trait = "0.1"
 collate = ">=0.1.2"
-destream = "0.4"
+destream = "0.5"
 num = "0.2"
 safecast = "0.1"
 serde = { version = "1.0", features = ["derive"] }
 
 [dev-dependencies]
 bytes = "1.0"
-destream_json = "0.6"
+destream_json = "0.7"
 futures = "0.3"
 serde_json = "1.0"
