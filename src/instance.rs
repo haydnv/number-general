@@ -3,15 +3,19 @@ use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::iter::{Product, Sum};
 use std::ops::*;
+use std::str::FromStr;
 
+use async_trait::async_trait;
 use collate::Collate;
-use destream::{EncodeSeq, Encoder, IntoStream, ToStream};
+use destream::{Decoder, EncodeSeq, Encoder, FromStream, IntoStream, ToStream};
+use futures::TryFutureExt;
 use num::traits::Pow;
 use safecast::*;
 use serde::ser::{Serialize, SerializeSeq, Serializer};
 
 use super::class::*;
-use super::{Number, _Complex};
+use super::{Error, Number, _Complex};
+use serde::{Deserialize, Deserializer};
 
 /// A boolean value.
 #[derive(Clone, Copy, Hash, Ord, PartialEq, PartialOrd)]
@@ -68,6 +72,14 @@ impl Default for Boolean {
 impl From<bool> for Boolean {
     fn from(b: bool) -> Boolean {
         Self(b)
+    }
+}
+
+impl FromStr for Boolean {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        bool::from_str(s).map(Self::from).map_err(Error::new)
     }
 }
 
@@ -196,6 +208,27 @@ impl fmt::Display for Boolean {
 impl Serialize for Boolean {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         s.serialize_bool(self.0)
+    }
+}
+
+impl<'de> Deserialize<'de> for Boolean {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        bool::deserialize(deserializer).map(Self::from)
+    }
+}
+
+#[async_trait]
+impl FromStream for Boolean {
+    type Context = ();
+
+    async fn from_stream<D: Decoder>(
+        cxt: Self::Context,
+        decoder: &mut D,
+    ) -> Result<Self, D::Error> {
+        bool::from_stream(cxt, decoder).map_ok(Self::from).await
     }
 }
 
@@ -533,6 +566,26 @@ impl From<_Complex<f64>> for Complex {
     }
 }
 
+impl FromStr for Complex {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        num::Complex::<f64>::from_str(s)
+            .map(Self::from)
+            .map_err(Error::new)
+    }
+}
+
+impl<'de> Deserialize<'de> for Complex {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let [re, im]: [f64; 2] = Deserialize::deserialize(deserializer)?;
+        Ok(num::Complex::new(re, im).into())
+    }
+}
+
 impl Serialize for Complex {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         match self {
@@ -549,6 +602,19 @@ impl Serialize for Complex {
                 seq.end()
             }
         }
+    }
+}
+
+#[async_trait]
+impl FromStream for Complex {
+    type Context = ();
+
+    async fn from_stream<D: Decoder>(
+        cxt: Self::Context,
+        decoder: &mut D,
+    ) -> Result<Self, D::Error> {
+        let [re, im]: [f64; 2] = FromStream::from_stream(cxt, decoder).await?;
+        Ok(num::Complex::new(re, im).into())
     }
 }
 
@@ -859,6 +925,14 @@ impl From<UInt> for Float {
     }
 }
 
+impl FromStr for Float {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        f64::from_str(s).map(Self::from).map_err(Error::new)
+    }
+}
+
 impl CastFrom<Complex> for Float {
     fn cast_from(c: Complex) -> Float {
         use Complex::*;
@@ -900,12 +974,33 @@ impl From<Float> for f64 {
     }
 }
 
+impl<'de> Deserialize<'de> for Float {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        f64::deserialize(deserializer).map(Self::from)
+    }
+}
+
 impl Serialize for Float {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         match self {
             Float::F32(f) => s.serialize_f32(*f),
             Float::F64(f) => s.serialize_f64(*f),
         }
+    }
+}
+
+#[async_trait]
+impl FromStream for Float {
+    type Context = ();
+
+    async fn from_stream<D: Decoder>(
+        cxt: Self::Context,
+        decoder: &mut D,
+    ) -> Result<Self, D::Error> {
+        f64::from_stream(cxt, decoder).map_ok(Self::from).await
     }
 }
 
@@ -963,7 +1058,7 @@ impl Collate for FloatCollator {
             } else if left == f32::INFINITY || right == f32::NEG_INFINITY {
                 Ordering::Greater
             } else {
-                panic!("No collation defined between {} and {}", left, right)
+                panic!("no collation defined between {} and {}", left, right)
             }
         }
     }
@@ -1333,6 +1428,23 @@ impl From<Int> for i64 {
     }
 }
 
+impl FromStr for Int {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        i64::from_str(s).map(Self::from).map_err(Error::new)
+    }
+}
+
+impl<'de> Deserialize<'de> for Int {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        i64::deserialize(deserializer).map(Self::from)
+    }
+}
+
 impl Serialize for Int {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         match self {
@@ -1341,6 +1453,18 @@ impl Serialize for Int {
             Int::I32(i) => s.serialize_i32(*i),
             Int::I64(i) => s.serialize_i64(*i),
         }
+    }
+}
+
+#[async_trait]
+impl FromStream for Int {
+    type Context = ();
+
+    async fn from_stream<D: Decoder>(
+        cxt: Self::Context,
+        decoder: &mut D,
+    ) -> Result<Self, D::Error> {
+        i64::from_stream(cxt, decoder).map_ok(Self::from).await
     }
 }
 
@@ -1777,6 +1901,23 @@ impl From<UInt> for usize {
     }
 }
 
+impl FromStr for UInt {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        u64::from_str(s).map(Self::from).map_err(Error::new)
+    }
+}
+
+impl<'de> Deserialize<'de> for UInt {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        u64::deserialize(deserializer).map(Self::from)
+    }
+}
+
 impl Serialize for UInt {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         match self {
@@ -1785,6 +1926,18 @@ impl Serialize for UInt {
             UInt::U32(u) => s.serialize_u32(*u),
             UInt::U64(u) => s.serialize_u64(*u),
         }
+    }
+}
+
+#[async_trait]
+impl FromStream for UInt {
+    type Context = ();
+
+    async fn from_stream<D: Decoder>(
+        cxt: Self::Context,
+        decoder: &mut D,
+    ) -> Result<Self, D::Error> {
+        u64::from_stream(cxt, decoder).map_ok(Self::from).await
     }
 }
 

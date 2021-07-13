@@ -20,6 +20,7 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::iter::{Product, Sum};
 use std::ops::*;
+use std::str::FromStr;
 
 use async_trait::async_trait;
 use collate::*;
@@ -36,6 +37,28 @@ mod instance;
 pub use class::*;
 use destream::Encoder;
 pub use instance::*;
+
+pub struct Error(String);
+
+impl Error {
+    fn new<E: fmt::Display>(cause: E) -> Self {
+        Self(cause.to_string())
+    }
+}
+
+impl std::error::Error for Error {}
+
+impl fmt::Debug for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str(&self.0)
+    }
+}
 
 type _Complex<T> = num::complex::Complex<T>;
 
@@ -478,6 +501,28 @@ impl From<Complex> for Number {
     }
 }
 
+impl FromStr for Number {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let s = s.trim();
+
+        if s.is_empty() {
+            Err(Error(
+                "cannot parse a Number from an empty string".to_string(),
+            ))
+        } else if s.len() == 1 {
+            Int::from_str(s).map(Self::from)
+        } else if s[1..].contains('+') || s[1..].contains('-') {
+            Complex::from_str(s).map(Self::from)
+        } else if s.contains('.') {
+            Float::from_str(s).map(Self::from)
+        } else {
+            Int::from_str(s).map(Self::from)
+        }
+    }
+}
+
 impl CastFrom<Number> for Boolean {
     fn cast_from(number: Number) -> Boolean {
         if number == number.class().zero() {
@@ -758,6 +803,11 @@ impl<'de> serde::de::Visitor<'de> for NumberVisitor {
     }
 
     #[inline]
+    fn visit_str<E: SerdeError>(self, s: &str) -> Result<Self::Value, E> {
+        s.parse().map_err(serde::de::Error::custom)
+    }
+
+    #[inline]
     fn visit_seq<A: serde::de::SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
         let re = seq
             .next_element()?
@@ -832,6 +882,11 @@ impl destream::de::Visitor for NumberVisitor {
     #[inline]
     fn visit_f64<E: DestreamError>(self, f: f64) -> Result<Self::Value, E> {
         self.f64(f)
+    }
+
+    #[inline]
+    fn visit_string<E: DestreamError>(self, s: String) -> Result<Self::Value, E> {
+        s.parse().map_err(destream::de::Error::custom)
     }
 
     async fn visit_seq<A: destream::de::SeqAccess>(
@@ -1043,5 +1098,24 @@ mod tests {
             block_on(destream_json::decode((), stream::once(encoded))).unwrap();
 
         assert_eq!(deserialized, numbers);
+    }
+
+    #[test]
+    fn test_parse() {
+        assert_eq!(Number::from_str("12").unwrap(), Number::from(12));
+        assert_eq!(Number::from_str("+31.4").unwrap(), Number::from(31.4));
+        assert_eq!(Number::from_str("-3.14").unwrap(), Number::from(-3.14));
+        assert_eq!(
+            Number::from_str("3.14+1.414i").unwrap(),
+            Number::from(num::Complex::new(3.14, 1.414))
+        );
+        assert_eq!(
+            Number::from_str("1+2i").unwrap(),
+            Number::from(num::Complex::new(1., 2.))
+        );
+        assert_eq!(
+            Number::from_str("1.0-2i").unwrap(),
+            Number::from(num::Complex::new(1., -2.))
+        );
     }
 }
