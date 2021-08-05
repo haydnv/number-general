@@ -295,6 +295,22 @@ impl NumberInstance for Complex {
     }
 }
 
+impl FloatInstance for Complex {
+    fn is_infinite(&self) -> bool {
+        match self {
+            Self::C32(c) => c.im.is_infinite() || c.re.is_infinite(),
+            Self::C64(c) => c.im.is_infinite() || c.re.is_infinite(),
+        }
+    }
+
+    fn is_nan(&self) -> bool {
+        match self {
+            Self::C32(c) => c.im.is_nan() || c.re.is_nan(),
+            Self::C64(c) => c.im.is_nan() || c.re.is_nan(),
+        }
+    }
+}
+
 impl CastFrom<[f32; 2]> for Complex {
     fn cast_from(arr: [f32; 2]) -> Self {
         Self::C32(num::Complex::new(arr[0], arr[1]))
@@ -732,6 +748,22 @@ impl NumberInstance for Float {
             (Self::F32(this), Self::F64(that)) => Self::F64((this as f64).powf(that)),
             (Self::F64(this), Self::F32(that)) => Self::F64(this.powf(that as f64)),
             (Self::F64(this), Self::F64(that)) => Self::F64(this.powf(that)),
+        }
+    }
+}
+
+impl FloatInstance for Float {
+    fn is_infinite(&self) -> bool {
+        match self {
+            Self::F32(f) => f.is_infinite(),
+            Self::F64(f) => f.is_infinite(),
+        }
+    }
+
+    fn is_nan(&self) -> bool {
+        match self {
+            Self::F32(f) => f.is_nan(),
+            Self::F64(f) => f.is_nan(),
         }
     }
 }

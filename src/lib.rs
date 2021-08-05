@@ -75,6 +75,7 @@ pub enum Number {
 }
 
 impl Number {
+    /// Return `false` if this is a [`Complex`] `Number`.
     pub fn is_real(&self) -> bool {
         if let Self::Complex(_) = self {
             false
@@ -154,6 +155,24 @@ impl NumberInstance for Number {
                 let exp = exp.into_type(dtype);
                 this.pow(exp)
             }
+        }
+    }
+}
+
+impl FloatInstance for Number {
+    fn is_infinite(&self) -> bool {
+        match self {
+            Self::Complex(c) => c.is_infinite(),
+            Self::Float(f) => f.is_infinite(),
+            _ => false,
+        }
+    }
+
+    fn is_nan(&self) -> bool {
+        match self {
+            Self::Complex(c) => c.is_nan(),
+            Self::Float(f) => f.is_nan(),
+            _ => false,
         }
     }
 }

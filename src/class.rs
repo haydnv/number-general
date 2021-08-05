@@ -100,6 +100,15 @@ pub trait NumberInstance:
     }
 }
 
+/// Defines common operations on floating-point numeric types.
+pub trait FloatInstance {
+    /// Return `true` if this `Number` is infinite (e.g. [`f32::INF`]).
+    fn is_infinite(&self) -> bool;
+
+    /// Return `true` if this is not a valid number (NaN).
+    fn is_nan(&self) -> bool;
+}
+
 /// The type of a [`Complex`] number.
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Deserialize, Serialize)]
 pub enum ComplexType {
