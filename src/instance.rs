@@ -107,8 +107,7 @@ impl Add for Boolean {
 
 impl AddAssign for Boolean {
     fn add_assign(&mut self, other: Self) {
-        let sum = *self + other;
-        *self = sum;
+        self.0 |= other.0
     }
 }
 
@@ -116,7 +115,11 @@ impl Sub for Boolean {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self::Output {
-        self.xor(other)
+        if self.0 {
+            other.not()
+        } else {
+            self
+        }
     }
 }
 
@@ -147,8 +150,7 @@ impl Mul for Boolean {
 
 impl MulAssign for Boolean {
     fn mul_assign(&mut self, other: Self) {
-        let product = *self * other;
-        *self = product;
+        self.0 &= other.0
     }
 }
 
