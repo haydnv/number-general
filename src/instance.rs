@@ -115,28 +115,19 @@ impl Sub for Boolean {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self::Output {
-        if self.0 {
-            other.not()
-        } else {
-            self
-        }
+        self.xor(other)
     }
 }
 
 impl SubAssign for Boolean {
     fn sub_assign(&mut self, other: Self) {
-        let diff = *self - other;
-        *self = diff;
+        self.0 ^= other.0
     }
 }
 
 impl Sum for Boolean {
-    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        let mut sum = Self(false);
-        for i in iter {
-            sum = sum + i;
-        }
-        sum
+    fn sum<I: Iterator<Item = Self>>(mut iter: I) -> Self {
+        Self(iter.any(|b| b.0))
     }
 }
 
@@ -174,18 +165,8 @@ impl DivAssign for Boolean {
 }
 
 impl Product for Boolean {
-    fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
-        let zero = Boolean(false);
-        let mut product = Boolean(true);
-
-        for i in iter {
-            if i == zero {
-                return zero;
-            }
-
-            product = product * i;
-        }
-        product
+    fn product<I: Iterator<Item = Self>>(mut iter: I) -> Self {
+        Self(iter.all(|b| b.0))
     }
 }
 
