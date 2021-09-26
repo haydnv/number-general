@@ -13,12 +13,26 @@ use super::{Number, _Complex};
 pub trait NumberClass: Default + Into<NumberType> + Ord + Send + fmt::Display {
     type Instance: NumberInstance;
 
+    /// Cast the given `Number` into an instance of this type.
     fn cast(&self, n: Number) -> Self::Instance;
 
+    /// Return `true` if this is a complex type.
+    fn is_complex(&self) -> bool {
+        return false;
+    }
+
+    /// Return `false` if this is a complex type.
+    fn is_real(&self) -> bool {
+        !self.is_complex()
+    }
+
+    /// Return the maximum size of this type of [`Number`], in bits.
     fn size(self) -> usize;
 
+    /// Return `1` as an instance of this type.
     fn one(&self) -> <Self as NumberClass>::Instance;
 
+    /// Return `0` as an instance of this type.
     fn zero(&self) -> <Self as NumberClass>::Instance;
 }
 
@@ -136,6 +150,10 @@ impl NumberClass for ComplexType {
             Self::C32 => Complex::C32(n.cast_into()),
             _ => Complex::C64(n.cast_into()),
         }
+    }
+
+    fn is_complex(&self) -> bool {
+        true
     }
 
     fn size(self) -> usize {
