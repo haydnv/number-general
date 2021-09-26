@@ -138,23 +138,35 @@ impl NumberInstance for Number {
         }
     }
 
+    fn exp(self) -> Self::Exp {
+        match self {
+            Self::Complex(this) => this.exp().into(),
+            Self::Float(this) => this.exp().into(),
+            this => Float::cast_from(this).exp().into(),
+        }
+    }
+
     fn pow(self, exp: Self) -> Self {
-        match (self, exp) {
-            (Self::Complex(this), Self::Complex(exp)) => this.pow(exp).into(),
-            (Self::Float(this), Self::Float(exp)) => this.pow(exp).into(),
-            (Self::Int(this), Self::UInt(exp)) => this.pow(exp).into(),
-            (Self::Int(this), Self::Int(that)) => {
-                // pow(Int, -Int) doesn't make sense, so cast to Float
-                Float::cast_from(this).pow(Float::cast_from(that)).into()
-            }
-            (Self::UInt(this), Self::UInt(exp)) => this.pow(exp).into(),
-            (Self::Bool(this), Self::Bool(exp)) => this.pow(exp).into(),
-            (this, exp) => {
-                let dtype = Ord::max(self.class(), exp.class());
-                let this = this.into_type(dtype);
-                let exp = exp.into_type(dtype);
-                this.pow(exp)
-            }
+        match self {
+            Self::Complex(this) => Self::Complex(this.pow(exp)),
+            Self::Float(this) => Self::Float(this.pow(exp)),
+            Self::Int(this) => match exp {
+                Self::Complex(exp) => Self::Float(Float::from(this).pow(exp.into())),
+                Self::Float(exp) => Self::Float(Float::from(this).pow(exp.into())),
+                Self::Int(exp) if exp < exp.class().zero() => {
+                    Self::Float(Float::from(this).pow(exp.into()))
+                }
+                exp => Self::Int(this.pow(exp)),
+            },
+            Self::UInt(this) => match exp {
+                Self::Complex(exp) => Self::Float(Float::from(this).pow(exp.into())),
+                Self::Float(exp) => Self::Float(Float::from(this).pow(exp.into())),
+                Self::Int(exp) if exp < exp.class().zero() => {
+                    Self::Float(Float::from(this).pow(exp.into()))
+                }
+                exp => Self::UInt(this.pow(exp)),
+            },
+            Self::Bool(b) => Self::Bool(b.pow(exp)),
         }
     }
 }
@@ -1041,9 +1053,11 @@ mod tests {
             assert_eq!(two, (one * two) / one);
             assert_eq!(zero, one * zero);
 
-            assert_eq!(one, one.pow(zero));
-            assert_eq!(one * one, one.pow(two));
-            assert_eq!(two.pow(two), (one * two).pow(two));
+            if one.is_real() {
+                assert_eq!(one, one.pow(zero));
+                assert_eq!(one * one, one.pow(two));
+                assert_eq!(two.pow(two), (one * two).pow(two));
+            }
 
             assert_eq!(f, one.not());
             assert_eq!(f, one.and(zero));

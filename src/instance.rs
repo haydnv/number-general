@@ -17,13 +17,15 @@ use super::class::*;
 use super::{Error, Number, _Complex};
 use serde::{Deserialize, Deserializer};
 
+const ERR_COMPLEX_POWER: &str = "complex exponent is not yet supported";
+
 /// A boolean value.
 #[derive(Clone, Copy, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Boolean(bool);
 
 impl NumberInstance for Boolean {
     type Abs = Self;
-    type Exp = Self;
+    type Exp = Float;
     type Class = BooleanType;
 
     fn class(&self) -> BooleanType {
@@ -38,8 +40,12 @@ impl NumberInstance for Boolean {
         self
     }
 
-    fn pow(self, exp: Self) -> Self {
-        if bool::from(exp) {
+    fn exp(self) -> Self::Exp {
+        Float::cast_from(self).exp()
+    }
+
+    fn pow(self, exp: Number) -> Self {
+        if exp.cast_into() {
             self
         } else {
             self.class().one()
@@ -268,12 +274,30 @@ impl NumberInstance for Complex {
         }
     }
 
-    fn pow(self, exp: Self) -> Self {
-        match (self, exp) {
-            (Self::C32(this), Self::C32(that)) => Self::C32(this.pow(that)),
-            (Self::C64(this), Self::C64(that)) => Self::C64(this.pow(that)),
-            (this, Self::C64(that)) => Self::C64(_Complex::<f64>::from(this).pow(that)),
-            (Self::C64(this), that) => Self::C64(this.pow(_Complex::<f64>::from(that))),
+    fn exp(self) -> Self::Exp {
+        match self {
+            Self::C32(c) => Self::C32(c.exp()),
+            Self::C64(c) => Self::C64(c.exp()),
+        }
+    }
+
+    fn pow(self, exp: Number) -> Self {
+        match self {
+            Self::C64(this) => match exp {
+                Number::Complex(exp) => unimplemented!("{}: {}", ERR_COMPLEX_POWER, exp),
+                Number::Float(Float::F64(exp)) => Self::C64(this.pow(exp)),
+                Number::Float(Float::F32(exp)) => Self::C64(this.pow(exp)),
+                exp => Self::C64(this.pow(f64::cast_from(exp))),
+            },
+            Self::C32(this) => match exp {
+                Number::Complex(exp) => unimplemented!("{}: {}", ERR_COMPLEX_POWER, exp),
+                Number::Float(Float::F64(exp)) => {
+                    let this = _Complex::<f64>::new(this.re.into(), this.im.into());
+                    Self::C64(this.pow(exp))
+                }
+                Number::Float(Float::F32(exp)) => Self::C32(this.pow(exp)),
+                exp => Self::C32(this.pow(f32::cast_from(exp))),
+            },
         }
     }
 }
@@ -725,12 +749,24 @@ impl NumberInstance for Float {
         }
     }
 
-    fn pow(self, exp: Self) -> Self {
-        match (self, exp) {
-            (Self::F32(this), Self::F32(that)) => Self::F32(this.powf(that)),
-            (Self::F32(this), Self::F64(that)) => Self::F64((this as f64).powf(that)),
-            (Self::F64(this), Self::F32(that)) => Self::F64(this.powf(that as f64)),
-            (Self::F64(this), Self::F64(that)) => Self::F64(this.powf(that)),
+    fn exp(self) -> Self::Exp {
+        match self {
+            Self::F32(f) => Self::F32(f.exp()),
+            Self::F64(f) => Self::F64(f.exp()),
+        }
+    }
+
+    fn pow(self, exp: Number) -> Self {
+        match self {
+            Self::F64(this) => match exp {
+                Number::Complex(exp) => unimplemented!("{}: {}", ERR_COMPLEX_POWER, exp),
+                exp => this.pow(f64::cast_from(exp)).into(),
+            },
+            Self::F32(this) => match exp {
+                Number::Complex(exp) => unimplemented!("{}: {}", ERR_COMPLEX_POWER, exp),
+                Number::Float(Float::F64(exp)) => Self::F64(f64::from(self).pow(exp)),
+                exp => this.pow(f32::cast_from(exp)).into(),
+            },
         }
     }
 }
@@ -1090,7 +1126,7 @@ pub enum Int {
 
 impl NumberInstance for Int {
     type Abs = Self;
-    type Exp = UInt;
+    type Exp = Float;
     type Class = IntType;
 
     fn class(&self) -> IntType {
@@ -1142,12 +1178,20 @@ impl NumberInstance for Int {
         }
     }
 
-    fn pow(self, exp: Self::Exp) -> Self {
-        match (self, exp) {
-            (Self::I8(this), u) => Self::I8(this.pow(u.cast_into())),
-            (Self::I16(this), u) => Self::I16(this.pow(u.cast_into())),
-            (Self::I32(this), u) => Self::I32(this.pow(u.cast_into())),
-            (Self::I64(this), u) => Self::I64(this.pow(u.cast_into())),
+    fn exp(self) -> Self::Exp {
+        Float::from(self).exp()
+    }
+
+    fn pow(self, exp: Number) -> Self {
+        if exp < exp.class().zero() {
+            return self.class().zero();
+        }
+
+        match self {
+            Self::I8(this) => Self::I8(this.pow(exp.cast_into())),
+            Self::I16(this) => Self::I16(this.pow(exp.cast_into())),
+            Self::I32(this) => Self::I32(this.pow(exp.cast_into())),
+            Self::I64(this) => Self::I64(this.pow(exp.cast_into())),
         }
     }
 }
@@ -1533,7 +1577,7 @@ pub enum UInt {
 
 impl NumberInstance for UInt {
     type Abs = Self;
-    type Exp = Self;
+    type Exp = Float;
     type Class = UIntType;
 
     fn class(&self) -> UIntType {
@@ -1580,12 +1624,20 @@ impl NumberInstance for UInt {
         self
     }
 
-    fn pow(self, exp: Self::Exp) -> Self {
-        match (self, exp) {
-            (Self::U8(this), that) => Self::U8(this.pow(that.cast_into())),
-            (Self::U16(this), that) => Self::U16(this.pow(that.cast_into())),
-            (Self::U32(this), that) => Self::U32(this.pow(that.cast_into())),
-            (Self::U64(this), that) => Self::U64(this.pow(that.cast_into())),
+    fn exp(self) -> Self::Exp {
+        Float::from(self).exp()
+    }
+
+    fn pow(self, exp: Number) -> Self {
+        if exp < Number::from(0) {
+            return self.class().zero();
+        }
+
+        match self {
+            Self::U8(this) => Self::U8(this.pow(exp.cast_into())),
+            Self::U16(this) => Self::U16(this.pow(exp.cast_into())),
+            Self::U32(this) => Self::U32(this.pow(exp.cast_into())),
+            Self::U64(this) => Self::U64(this.pow(exp.cast_into())),
         }
     }
 }

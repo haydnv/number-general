@@ -58,8 +58,13 @@ pub trait NumberInstance:
     /// Calculate the absolute value of this number.
     fn abs(self) -> Self::Abs;
 
+    /// Raise `e` to the power of this number.
+    fn exp(self) -> Self::Exp;
+
     /// Raise this number to the given exponent.
-    fn pow(self, exp: Self::Exp) -> Self;
+    ///
+    /// Panics: if the given exponent is a complex number.
+    fn pow(self, exp: Number) -> Self;
 
     /// Return `true` if `self` and `other` are nonzero.
     fn and(self, other: Self) -> Self
