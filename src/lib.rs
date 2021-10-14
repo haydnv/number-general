@@ -38,6 +38,34 @@ pub use class::*;
 use destream::Encoder;
 pub use instance::*;
 
+pub trait DType {
+    fn dtype() -> NumberType;
+}
+
+macro_rules! dtype {
+    ($t:ty,$nt:expr) => {
+        impl DType for $t {
+            fn dtype() -> NumberType {
+                $nt
+            }
+        }
+    };
+}
+
+dtype!(bool, NumberType::Bool);
+dtype!(u8, NumberType::UInt(UIntType::U8));
+dtype!(u16, NumberType::UInt(UIntType::U16));
+dtype!(u32, NumberType::UInt(UIntType::U32));
+dtype!(u64, NumberType::UInt(UIntType::U64));
+dtype!(i8, NumberType::Int(IntType::I8));
+dtype!(i16, NumberType::Int(IntType::I16));
+dtype!(i32, NumberType::Int(IntType::I32));
+dtype!(i64, NumberType::Int(IntType::I64));
+dtype!(f32, NumberType::Float(FloatType::F32));
+dtype!(f64, NumberType::Float(FloatType::F64));
+dtype!(_Complex<f32>, NumberType::Complex(ComplexType::C32));
+dtype!(_Complex<f64>, NumberType::Complex(ComplexType::C64));
+
 pub struct Error(String);
 
 impl Error {
