@@ -572,9 +572,11 @@ impl FromStr for Number {
             ))
         } else if s.len() == 1 {
             Int::from_str(s).map(Self::from)
+        } else if s.contains("e+") || s.contains("e-") {
+            Float::from_str(s).map(Self::from)
         } else if s[1..].contains('+') || s[1..].contains('-') {
             Complex::from_str(s).map(Self::from)
-        } else if s.contains('.') {
+        } else if s.contains('.') || s.contains('e') {
             Float::from_str(s).map(Self::from)
         } else {
             Int::from_str(s).map(Self::from)
@@ -1143,6 +1145,7 @@ mod tests {
             Number::from(12u16),
             Number::from(-3),
             Number::from(3.14),
+            Number::from(1e-6),
             Number::from(_Complex::<f32>::new(0., -1.414)),
         ];
 
@@ -1159,11 +1162,21 @@ mod tests {
             block_on(destream_json::decode((), stream::once(encoded))).unwrap();
 
         assert_eq!(deserialized, numbers);
+
+        let fp: f64 = block_on(destream_json::decode(
+            (),
+            stream::once(future::ready(Bytes::copy_from_slice(b"1e-6"))),
+        ))
+        .unwrap();
+
+        assert_eq!(fp, 1e-6);
     }
 
     #[test]
     fn test_parse() {
         assert_eq!(Number::from_str("12").unwrap(), Number::from(12));
+        assert_eq!(Number::from_str("1e6").unwrap(), Number::from(1e6));
+        assert_eq!(Number::from_str("1e-6").unwrap(), Number::from(1e-6));
         assert_eq!(Number::from_str("+31.4").unwrap(), Number::from(31.4));
         assert_eq!(Number::from_str("-3.14").unwrap(), Number::from(-3.14));
         assert_eq!(

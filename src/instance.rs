@@ -12,10 +12,10 @@ use futures::TryFutureExt;
 use num::traits::Pow;
 use safecast::*;
 use serde::ser::{Serialize, SerializeSeq, Serializer};
+use serde::{Deserialize, Deserializer};
 
 use super::class::*;
 use super::{Error, Number, _Complex};
-use serde::{Deserialize, Deserializer};
 
 const ERR_COMPLEX_POWER: &str = "complex exponent is not yet supported";
 
