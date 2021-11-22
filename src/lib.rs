@@ -90,7 +90,8 @@ impl fmt::Display for Error {
 
 type _Complex<T> = num::complex::Complex<T>;
 
-const EXPECTING: &str = "a Number, like 1 or -2 or 3.14 or [0., -1.414]";
+const ERR_COMPLEX: &str = "a complex number";
+const ERR_NUMBER: &str = "a Number, like 1 or -2 or 3.14 or [0., -1.414]";
 
 /// A generic number.
 #[derive(Clone, Copy, Eq, Hash)]
@@ -805,7 +806,7 @@ impl<'de> serde::de::Visitor<'de> for NumberVisitor {
     type Value = Number;
 
     fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(EXPECTING)
+        f.write_str(ERR_NUMBER)
     }
 
     #[inline]
@@ -872,11 +873,11 @@ impl<'de> serde::de::Visitor<'de> for NumberVisitor {
     fn visit_seq<A: serde::de::SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
         let re = seq
             .next_element()?
-            .ok_or_else(|| SerdeError::custom("Complex number missing real component"))?;
+            .ok_or_else(|| SerdeError::invalid_length(0, &ERR_COMPLEX))?;
 
         let im = seq
             .next_element()?
-            .ok_or_else(|| SerdeError::custom("Complex number missing imaginary component"))?;
+            .ok_or_else(|| SerdeError::invalid_length(1, &ERR_COMPLEX))?;
 
         Ok(Number::Complex(Complex::C64(_Complex::<f64>::new(re, im))))
     }
@@ -887,7 +888,7 @@ impl destream::de::Visitor for NumberVisitor {
     type Value = Number;
 
     fn expecting() -> &'static str {
-        EXPECTING
+        ERR_NUMBER
     }
 
     #[inline]
@@ -957,12 +958,12 @@ impl destream::de::Visitor for NumberVisitor {
         let re = seq
             .next_element(())
             .await?
-            .ok_or_else(|| DestreamError::custom("Complex number missing real component"))?;
+            .ok_or_else(|| DestreamError::invalid_length(0, ERR_COMPLEX))?;
 
         let im = seq
             .next_element(())
             .await?
-            .ok_or_else(|| DestreamError::custom("Complex number missing imaginary component"))?;
+            .ok_or_else(|| DestreamError::invalid_length(1, ERR_COMPLEX))?;
 
         Ok(Number::Complex(Complex::C64(_Complex::<f64>::new(re, im))))
     }
@@ -1177,6 +1178,7 @@ mod tests {
         assert_eq!(Number::from_str("12").unwrap(), Number::from(12));
         assert_eq!(Number::from_str("1e6").unwrap(), Number::from(1e6));
         assert_eq!(Number::from_str("1e-6").unwrap(), Number::from(1e-6));
+        assert_eq!(Number::from_str("1e-06").unwrap(), Number::from(1e-6));
         assert_eq!(Number::from_str("+31.4").unwrap(), Number::from(31.4));
         assert_eq!(Number::from_str("-3.14").unwrap(), Number::from(-3.14));
         assert_eq!(
