@@ -186,12 +186,31 @@ impl Product for Boolean {
     }
 }
 
+macro_rules! trig_bool {
+    ($fun:ident) => {
+        fn $fun(self) -> Self::Out {
+            self.as_radians().$fun().into()
+        }
+    };
+}
+
 impl Trigonometry for Boolean {
     type Out = Float;
 
-    fn sin(self) -> Self::Out {
-        self.as_radians().sin().into()
-    }
+    trig_bool! {asin}
+    trig_bool! {sin}
+    trig_bool! {sinh}
+    trig_bool! {asinh}
+
+    trig_bool! {acos}
+    trig_bool! {cos}
+    trig_bool! {cosh}
+    trig_bool! {acosh}
+
+    trig_bool! {atan}
+    trig_bool! {tan}
+    trig_bool! {tanh}
+    trig_bool! {atanh}
 }
 
 impl CastFrom<Boolean> for u64 {
@@ -512,15 +531,34 @@ impl Product for Complex {
     }
 }
 
+macro_rules! trig_complex {
+    ($fun:ident) => {
+        fn $fun(self) -> Self {
+            match self {
+                Complex::C32(c) => c.$fun().into(),
+                Complex::C64(c) => c.$fun().into(),
+            }
+        }
+    };
+}
+
 impl Trigonometry for Complex {
     type Out = Self;
 
-    fn sin(self) -> Self {
-        match self {
-            Self::C32(c) => c.sin().into(),
-            Self::C64(c) => c.sin().into(),
-        }
-    }
+    trig_complex! {asin}
+    trig_complex! {sin}
+    trig_complex! {sinh}
+    trig_complex! {asinh}
+
+    trig_complex! {acos}
+    trig_complex! {cos}
+    trig_complex! {cosh}
+    trig_complex! {acosh}
+
+    trig_complex! {atan}
+    trig_complex! {tan}
+    trig_complex! {tanh}
+    trig_complex! {atanh}
 }
 
 impl PartialEq for Complex {
@@ -926,15 +964,34 @@ impl Product for Float {
     }
 }
 
+macro_rules! trig_float {
+    ($fun:ident) => {
+        fn $fun(self) -> Self {
+            match self {
+                Float::F32(f) => f.$fun().into(),
+                Float::F64(f) => f.$fun().into(),
+            }
+        }
+    };
+}
+
 impl Trigonometry for Float {
     type Out = Self;
 
-    fn sin(self) -> Self {
-        match self {
-            Self::F32(f) => f.sin().into(),
-            Self::F64(f) => f.sin().into(),
-        }
-    }
+    trig_float! {asin}
+    trig_float! {sin}
+    trig_float! {sinh}
+    trig_float! {asinh}
+
+    trig_float! {acos}
+    trig_float! {cos}
+    trig_float! {cosh}
+    trig_float! {acosh}
+
+    trig_float! {atan}
+    trig_float! {tan}
+    trig_float! {tanh}
+    trig_float! {atanh}
 }
 
 impl Hash for Float {
@@ -1437,17 +1494,36 @@ impl Product for Int {
     }
 }
 
+macro_rules! trig_int {
+    ($fun:ident) => {
+        fn $fun(self) -> Self::Out {
+            match self {
+                Self::I8(i) => (i as f32).$fun().into(),
+                Self::I16(i) => (i as f32).$fun().into(),
+                Self::I32(i) => (i as f32).$fun().into(),
+                Self::I64(i) => (i as f64).$fun().into(),
+            }
+        }
+    };
+}
+
 impl Trigonometry for Int {
     type Out = Float;
 
-    fn sin(self) -> Self::Out {
-        match self {
-            Self::I8(i) => (i as f32).sin().into(),
-            Self::I16(i) => (i as f32).sin().into(),
-            Self::I32(i) => (i as f32).sin().into(),
-            Self::I64(i) => (i as f64).sin().into(),
-        }
-    }
+    trig_int! {asin}
+    trig_int! {sin}
+    trig_int! {sinh}
+    trig_int! {asinh}
+
+    trig_int! {acos}
+    trig_int! {cos}
+    trig_int! {cosh}
+    trig_int! {acosh}
+
+    trig_int! {atan}
+    trig_int! {tan}
+    trig_int! {tanh}
+    trig_int! {atanh}
 }
 
 impl PartialEq for Int {
@@ -1928,17 +2004,36 @@ impl Product for UInt {
     }
 }
 
+macro_rules! trig_uint {
+    ($fun:ident) => {
+        fn $fun(self) -> Self::Out {
+            match self {
+                Self::U8(u) => (u as f32).$fun().into(),
+                Self::U16(u) => (u as f32).$fun().into(),
+                Self::U32(u) => (u as f32).$fun().into(),
+                Self::U64(u) => (u as f64).$fun().into(),
+            }
+        }
+    };
+}
+
 impl Trigonometry for UInt {
     type Out = Float;
 
-    fn sin(self) -> Self::Out {
-        match self {
-            Self::U8(u) => (u as f32).sin().into(),
-            Self::U16(u) => (u as f32).sin().into(),
-            Self::U32(u) => (u as f32).sin().into(),
-            Self::U64(u) => (u as f64).sin().into(),
-        }
-    }
+    trig_uint! {asin}
+    trig_uint! {sin}
+    trig_uint! {sinh}
+    trig_uint! {asinh}
+
+    trig_uint! {acos}
+    trig_uint! {cos}
+    trig_uint! {cosh}
+    trig_uint! {acosh}
+
+    trig_uint! {atan}
+    trig_uint! {tan}
+    trig_uint! {tanh}
+    trig_uint! {atanh}
 }
 
 impl Eq for UInt {}

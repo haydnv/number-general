@@ -446,18 +446,37 @@ impl Product for Number {
     }
 }
 
+macro_rules! trig {
+    ($fun:ident) => {
+        fn $fun(self) -> Self::Out {
+            match self {
+                Self::Bool(b) => b.$fun().into(),
+                Self::Complex(c) => c.$fun().into(),
+                Self::Float(f) => f.$fun().into(),
+                Self::Int(i) => i.$fun().into(),
+                Self::UInt(u) => u.$fun().into(),
+            }
+        }
+    };
+}
+
 impl Trigonometry for Number {
     type Out = Self;
 
-    fn sin(self) -> Self {
-        match self {
-            Self::Bool(b) => b.sin().into(),
-            Self::Complex(c) => c.sin().into(),
-            Self::Float(f) => f.sin().into(),
-            Self::Int(i) => i.sin().into(),
-            Self::UInt(u) => u.sin().into(),
-        }
-    }
+    trig! {asin}
+    trig! {sin}
+    trig! {asinh}
+    trig! {sinh}
+
+    trig! {acos}
+    trig! {cos}
+    trig! {acosh}
+    trig! {cosh}
+
+    trig! {atan}
+    trig! {tan}
+    trig! {atanh}
+    trig! {tanh}
 }
 
 impl Default for Number {

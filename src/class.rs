@@ -122,7 +122,29 @@ pub trait NumberInstance:
 pub trait Trigonometry {
     type Out: NumberInstance;
 
+    fn asin(self) -> Self::Out;
+
     fn sin(self) -> Self::Out;
+
+    fn asinh(self) -> Self::Out;
+
+    fn sinh(self) -> Self::Out;
+
+    fn acos(self) -> Self::Out;
+
+    fn cos(self) -> Self::Out;
+
+    fn acosh(self) -> Self::Out;
+
+    fn cosh(self) -> Self::Out;
+
+    fn atan(self) -> Self::Out;
+
+    fn tan(self) -> Self::Out;
+
+    fn atanh(self) -> Self::Out;
+
+    fn tanh(self) -> Self::Out;
 }
 
 /// Defines common operations on floating-point numeric types.
