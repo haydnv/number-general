@@ -35,7 +35,6 @@ mod class;
 mod instance;
 
 pub use class::*;
-use destream::Encoder;
 pub use instance::*;
 
 pub trait DType {
@@ -444,6 +443,20 @@ impl Product for Number {
             product = product * i;
         }
         product
+    }
+}
+
+impl Trigonometry for Number {
+    type Out = Self;
+
+    fn sin(self) -> Self {
+        match self {
+            Self::Bool(b) => b.sin().into(),
+            Self::Complex(c) => c.sin().into(),
+            Self::Float(f) => f.sin().into(),
+            Self::Int(i) => i.sin().into(),
+            Self::UInt(u) => u.sin().into(),
+        }
     }
 }
 
@@ -1002,7 +1015,7 @@ impl Serialize for Number {
 }
 
 impl<'en> ToStream<'en> for Number {
-    fn to_stream<E: Encoder<'en>>(&'en self, e: E) -> Result<E::Ok, E::Error> {
+    fn to_stream<E: destream::Encoder<'en>>(&'en self, e: E) -> Result<E::Ok, E::Error> {
         match self {
             Number::Bool(b) => b.to_stream(e),
             Number::Complex(c) => c.to_stream(e),
@@ -1014,7 +1027,7 @@ impl<'en> ToStream<'en> for Number {
 }
 
 impl<'en> IntoStream<'en> for Number {
-    fn into_stream<E: Encoder<'en>>(self, e: E) -> Result<E::Ok, E::Error> {
+    fn into_stream<E: destream::Encoder<'en>>(self, e: E) -> Result<E::Ok, E::Error> {
         match self {
             Number::Bool(b) => b.into_stream(e),
             Number::Complex(c) => c.into_stream(e),

@@ -119,6 +119,12 @@ pub trait NumberInstance:
     }
 }
 
+pub trait Trigonometry {
+    type Out: NumberInstance;
+
+    fn sin(self) -> Self::Out;
+}
+
 /// Defines common operations on floating-point numeric types.
 pub trait FloatInstance {
     /// Return `true` if this `Number` is infinite (e.g. [`f32::INF`]).

@@ -23,6 +23,16 @@ const ERR_COMPLEX_POWER: &str = "complex exponent is not yet supported";
 #[derive(Clone, Copy, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Boolean(bool);
 
+impl Boolean {
+    fn as_radians(self) -> f32 {
+        if self.0 {
+            2. * std::f32::consts::PI
+        } else {
+            0.
+        }
+    }
+}
+
 impl NumberInstance for Boolean {
     type Abs = Self;
     type Exp = Float;
@@ -173,6 +183,14 @@ impl DivAssign for Boolean {
 impl Product for Boolean {
     fn product<I: Iterator<Item = Self>>(mut iter: I) -> Self {
         Self(iter.all(|b| b.0))
+    }
+}
+
+impl Trigonometry for Boolean {
+    type Out = Float;
+
+    fn sin(self) -> Self::Out {
+        self.as_radians().sin().into()
     }
 }
 
@@ -491,6 +509,17 @@ impl Product for Complex {
             product = product * i;
         }
         product
+    }
+}
+
+impl Trigonometry for Complex {
+    type Out = Self;
+
+    fn sin(self) -> Self {
+        match self {
+            Self::C32(c) => c.sin().into(),
+            Self::C64(c) => c.sin().into(),
+        }
     }
 }
 
@@ -894,6 +923,17 @@ impl Product for Float {
             product = product * i;
         }
         product
+    }
+}
+
+impl Trigonometry for Float {
+    type Out = Self;
+
+    fn sin(self) -> Self {
+        match self {
+            Self::F32(f) => f.sin().into(),
+            Self::F64(f) => f.sin().into(),
+        }
     }
 }
 
@@ -1397,6 +1437,19 @@ impl Product for Int {
     }
 }
 
+impl Trigonometry for Int {
+    type Out = Float;
+
+    fn sin(self) -> Self::Out {
+        match self {
+            Self::I8(i) => (i as f32).sin().into(),
+            Self::I16(i) => (i as f32).sin().into(),
+            Self::I32(i) => (i as f32).sin().into(),
+            Self::I64(i) => (i as f64).sin().into(),
+        }
+    }
+}
+
 impl PartialEq for Int {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
@@ -1872,6 +1925,19 @@ impl Product for UInt {
             product = product * i;
         }
         product
+    }
+}
+
+impl Trigonometry for UInt {
+    type Out = Float;
+
+    fn sin(self) -> Self::Out {
+        match self {
+            Self::U8(u) => (u as f32).sin().into(),
+            Self::U16(u) => (u as f32).sin().into(),
+            Self::U32(u) => (u as f32).sin().into(),
+            Self::U64(u) => (u as f64).sin().into(),
+        }
     }
 }
 
