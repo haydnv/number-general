@@ -127,6 +127,20 @@ impl AddAssign for Boolean {
     }
 }
 
+impl Rem for Boolean {
+    type Output = Self;
+
+    fn rem(self, other: Self) -> Self::Output {
+        self - other
+    }
+}
+
+impl RemAssign for Boolean {
+    fn rem_assign(&mut self, other: Self) {
+        *self -= other
+    }
+}
+
 impl Sub for Boolean {
     type Output = Self;
 
@@ -431,6 +445,21 @@ impl AddAssign for Complex {
     fn add_assign(&mut self, other: Self) {
         let sum = *self + other;
         *self = sum;
+    }
+}
+
+impl Rem for Complex {
+    type Output = Self;
+
+    fn rem(self, other: Self) -> Self::Output {
+        match (self, other) {
+            (Self::C32(l), Self::C32(r)) => Self::C32(l - r),
+            (l, r) => {
+                let l: _Complex<f64> = l.into();
+                let r: _Complex<f64> = r.into();
+                Self::C64(l % r)
+            }
+        }
     }
 }
 
@@ -908,6 +937,26 @@ impl Sum for Float {
     }
 }
 
+impl Rem for Float {
+    type Output = Self;
+
+    fn rem(self, other: Self) -> Self::Output {
+        match (self, other) {
+            (Self::F64(l), Self::F64(r)) => Self::F64(l % r),
+            (Self::F32(l), Self::F32(r)) => Self::F32(l % r),
+            (Self::F64(l), Self::F32(r)) => Self::F64(l % r as f64),
+            (Self::F32(l), Self::F64(r)) => Self::F64(l as f64 % r),
+        }
+    }
+}
+
+impl RemAssign for Float {
+    fn rem_assign(&mut self, other: Self) {
+        let rem = *self % other;
+        *self = rem;
+    }
+}
+
 impl Mul for Float {
     type Output = Self;
 
@@ -1375,6 +1424,38 @@ impl AddAssign for Int {
     fn add_assign(&mut self, other: Self) {
         let sum = *self + other;
         *self = sum;
+    }
+}
+
+impl Rem for Int {
+    type Output = Self;
+
+    fn rem(self, other: Self) -> Self::Output {
+        match (self, other) {
+            (Self::I64(l), Self::I64(r)) => Self::I64(l % r),
+            (Self::I64(l), Self::I32(r)) => Self::I64(l % r as i64),
+            (Self::I64(l), Self::I16(r)) => Self::I64(l % r as i64),
+            (Self::I64(l), Self::I8(r)) => Self::I64(l % r as i64),
+            (Self::I32(l), Self::I64(r)) => Self::I64(l as i64 % r),
+            (Self::I32(l), Self::I32(r)) => Self::I32(l % r),
+            (Self::I32(l), Self::I16(r)) => Self::I32(l % r as i32),
+            (Self::I32(l), Self::I8(r)) => Self::I32(l % r as i32),
+            (Self::I16(l), Self::I64(r)) => Self::I64(l as i64 % r),
+            (Self::I16(l), Self::I32(r)) => Self::I32(l as i32 % r),
+            (Self::I16(l), Self::I16(r)) => Self::I16(l % r),
+            (Self::I16(l), Self::I8(r)) => Self::I16(l % r as i16),
+            (Self::I8(l), Self::I64(r)) => Self::I64(l as i64 % r),
+            (Self::I8(l), Self::I32(r)) => Self::I32(l as i32 % r),
+            (Self::I8(l), Self::I16(r)) => Self::I16(l as i16 % r),
+            (Self::I8(l), Self::I8(r)) => Self::I8(l % r),
+        }
+    }
+}
+
+impl RemAssign for Int {
+    fn rem_assign(&mut self, other: Self) {
+        let rem = *self % other;
+        *self = rem;
     }
 }
 
@@ -1876,6 +1957,36 @@ impl AddAssign for UInt {
     fn add_assign(&mut self, other: Self) {
         let sum = *self + other;
         *self = sum;
+    }
+}
+
+impl Rem for UInt {
+    type Output = Self;
+
+    fn rem(self, other: Self) -> Self::Output {
+        match (self, other) {
+            (UInt::U64(l), UInt::U64(r)) => UInt::U64(l % r),
+            (UInt::U64(l), UInt::U32(r)) => UInt::U64(l % r as u64),
+            (UInt::U64(l), UInt::U16(r)) => UInt::U64(l % r as u64),
+            (UInt::U64(l), UInt::U8(r)) => UInt::U64(l % r as u64),
+            (UInt::U32(l), UInt::U32(r)) => UInt::U32(l % r),
+            (UInt::U32(l), UInt::U16(r)) => UInt::U32(l % r as u32),
+            (UInt::U32(l), UInt::U8(r)) => UInt::U32(l % r as u32),
+            (UInt::U16(l), UInt::U16(r)) => UInt::U16(l % r),
+            (UInt::U16(l), UInt::U8(r)) => UInt::U16(l % r as u16),
+            (UInt::U8(l), UInt::U8(r)) => UInt::U8(l % r),
+            (UInt::U8(l), UInt::U16(r)) => UInt::U16(l as u16 % r),
+            (UInt::U8(l), UInt::U32(r)) => UInt::U32(l as u32 % r),
+            (UInt::U8(l), UInt::U64(r)) => UInt::U64(l as u64 % r),
+            (UInt::U16(l), r) => {
+                let r: u64 = r.into();
+                UInt::U16(l % r as u16)
+            }
+            (UInt::U32(l), r) => {
+                let r: u64 = r.into();
+                UInt::U32(l % r as u32)
+            }
+        }
     }
 }
 

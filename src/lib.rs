@@ -297,6 +297,47 @@ impl AddAssign for Number {
     }
 }
 
+impl Rem for Number {
+    type Output = Self;
+
+    fn rem(self, other: Self) -> Self::Output {
+        let dtype = Ord::max(self.class(), other.class());
+
+        use NumberType as NT;
+
+        match dtype {
+            NT::Bool => {
+                let this: Boolean = self.cast_into();
+                (this % other.cast_into()).into()
+            }
+            NT::Complex(_) => {
+                let this: Complex = self.cast_into();
+                (this % other.cast_into()).into()
+            }
+            NT::Float(_) => {
+                let this: Float = self.cast_into();
+                (this % other.cast_into()).into()
+            }
+            NT::Int(_) => {
+                let this: Int = self.cast_into();
+                (this % other.cast_into()).into()
+            }
+            NT::UInt(_) => {
+                let this: UInt = self.cast_into();
+                (this % other.cast_into()).into()
+            }
+            NT::Number => panic!("A number instance must have a specific type, not Number"),
+        }
+    }
+}
+
+impl RemAssign for Number {
+    fn rem_assign(&mut self, other: Self) {
+        let rem = *self % other;
+        *self = rem;
+    }
+}
+
 impl Sub for Number {
     type Output = Self;
 
