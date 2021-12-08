@@ -37,12 +37,15 @@ mod instance;
 pub use class::*;
 pub use instance::*;
 
+/// Define a [`NumberType`] for a non-[`Number`] type such as a Rust primitive.
+///
+/// To access the `NumberType` of a `Number`, use `Instance::class`, e.g. `Number::from(1).class()`.
 pub trait DType {
     fn dtype() -> NumberType;
 }
 
 macro_rules! dtype {
-    ($t:ty,$nt:expr) => {
+    ($t:ty, $nt:expr) => {
         impl DType for $t {
             fn dtype() -> NumberType {
                 $nt
@@ -65,6 +68,7 @@ dtype!(f64, NumberType::Float(FloatType::F64));
 dtype!(_Complex<f32>, NumberType::Complex(ComplexType::C32));
 dtype!(_Complex<f64>, NumberType::Complex(ComplexType::C64));
 
+/// The error type returned when a `Number` operation fails recoverably.
 pub struct Error(String);
 
 impl Error {

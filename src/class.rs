@@ -119,37 +119,50 @@ pub trait NumberInstance:
     }
 }
 
+/// Trigonometric functions.
 pub trait Trigonometry {
     type Out: NumberInstance;
 
+    /// Arcsine
     fn asin(self) -> Self::Out;
 
+    /// Sine
     fn sin(self) -> Self::Out;
 
+    /// Hyperbolic arcsine
     fn asinh(self) -> Self::Out;
 
+    /// Hyperbolic sine
     fn sinh(self) -> Self::Out;
 
+    /// Hyperbolic arccosine
     fn acos(self) -> Self::Out;
 
+    /// Cosine
     fn cos(self) -> Self::Out;
 
+    /// Hyperbolic arccosine
     fn acosh(self) -> Self::Out;
 
+    /// Hyperbolic cosine
     fn cosh(self) -> Self::Out;
 
+    /// Arctangent
     fn atan(self) -> Self::Out;
 
+    /// Tangent
     fn tan(self) -> Self::Out;
 
+    /// Hyperbolic arctangent
     fn atanh(self) -> Self::Out;
 
+    /// Hyperbolic tangent
     fn tanh(self) -> Self::Out;
 }
 
 /// Defines common operations on floating-point numeric types.
 pub trait FloatInstance {
-    /// Return `true` if this `Number` is infinite (e.g. [`f32::INF`]).
+    /// Return `true` if this `Number` is infinite (e.g. [`f32::INFINITY`]).
     fn is_infinite(&self) -> bool;
 
     /// Return `true` if this is not a valid number (NaN).
