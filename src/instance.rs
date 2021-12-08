@@ -79,6 +79,11 @@ impl NumberInstance for Boolean {
     }
 }
 
+impl RealInstance for Boolean {
+    const ONE: Self = Boolean(true);
+    const ZERO: Self = Boolean(false);
+}
+
 impl Default for Boolean {
     fn default() -> Boolean {
         Self(false)
@@ -867,6 +872,11 @@ impl NumberInstance for Float {
     }
 }
 
+impl RealInstance for Float {
+    const ONE: Self = Float::F32(1.);
+    const ZERO: Self = Float::F32(0.);
+}
+
 impl FloatInstance for Float {
     fn is_infinite(&self) -> bool {
         match self {
@@ -1340,6 +1350,11 @@ impl NumberInstance for Int {
             Self::I64(this) => Self::I64(this.pow(exp.cast_into())),
         }
     }
+}
+
+impl RealInstance for Int {
+    const ONE: Self = Int::I8(1);
+    const ZERO: Self = Int::I8(0);
 }
 
 impl CastFrom<Complex> for Int {
@@ -1850,6 +1865,11 @@ impl NumberInstance for UInt {
             Self::U64(this) => Self::U64(this.pow(exp.cast_into())),
         }
     }
+}
+
+impl RealInstance for UInt {
+    const ONE: Self = UInt::U8(1);
+    const ZERO: Self = UInt::U8(0);
 }
 
 impl CastFrom<Complex> for UInt {

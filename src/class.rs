@@ -160,6 +160,24 @@ pub trait Trigonometry {
     fn tanh(self) -> Self::Out;
 }
 
+/// Defines common operations on real (i.e. not `Complex`) numbers.
+pub trait RealInstance: PartialEq + PartialOrd + Sized {
+    const ONE: Self;
+    const ZERO: Self;
+
+    fn is_positive(&self) -> bool {
+        self >= &Self::ZERO
+    }
+
+    fn is_negative(&self) -> bool {
+        self < &Self::ZERO
+    }
+
+    fn is_zero(&self) -> bool {
+        self == &Self::ZERO
+    }
+}
+
 /// Defines common operations on floating-point numeric types.
 pub trait FloatInstance {
     /// Return `true` if this `Number` is infinite (e.g. [`f32::INFINITY`]).
