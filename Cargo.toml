@@ -1,6 +1,6 @@
 [package]
 name = "number-general"
-version = "0.4.7"
+version = "0.4.8"
 authors = ["haydn@tinychain.net"]
 edition = "2018"
 description = "A generic number type for Rust which supports basic math and (de)serialization."
@@ -12,7 +12,9 @@ categories = ["data-structures", "mathematics"]
 keywords = ["number", "complex", "float", "integer", "unsigned"]
 
 [dependencies]
+async-hash = "0.1"
 async-trait = "0.1"
+bytes = "1.1"
 collate = ">=0.1.2"
 destream = "0.5"
 futures = "0.3"

@@ -17,12 +17,14 @@
 //! ```
 
 use std::cmp::Ordering;
+use std::convert::Infallible;
 use std::fmt;
 use std::iter::{Product, Sum};
 use std::ops::*;
 use std::str::FromStr;
 
 use async_trait::async_trait;
+use bytes::Bytes;
 use collate::*;
 use destream::de::{Decoder, Error as DestreamError, FromStream};
 use destream::en::{IntoStream, ToStream};
@@ -522,6 +524,22 @@ impl Trigonometry for Number {
     trig! {tan}
     trig! {atanh}
     trig! {tanh}
+}
+
+#[async_trait]
+impl async_hash::Hash for Number {
+    type Context = ();
+    type Error = Infallible;
+
+    async fn hash(&self, cxt: &Self::Context) -> Result<Bytes, Self::Error> {
+        match self {
+            Self::Bool(b) => async_hash::Hash::hash(b, cxt).await,
+            Self::Complex(c) => async_hash::Hash::hash(c, cxt).await,
+            Self::Float(f) => async_hash::Hash::hash(f, cxt).await,
+            Self::Int(i) => async_hash::Hash::hash(i, cxt).await,
+            Self::UInt(u) => async_hash::Hash::hash(u, cxt).await,
+        }
+    }
 }
 
 impl Default for Number {

@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::convert::Infallible;
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::iter::{Product, Sum};
@@ -6,6 +7,7 @@ use std::ops::*;
 use std::str::FromStr;
 
 use async_trait::async_trait;
+use bytes::Bytes;
 use collate::Collate;
 use destream::{Decoder, EncodeSeq, Encoder, FromStream, IntoStream, ToStream};
 use futures::TryFutureExt;
@@ -87,6 +89,16 @@ impl RealInstance for Boolean {
 impl Default for Boolean {
     fn default() -> Boolean {
         Self(false)
+    }
+}
+
+#[async_trait]
+impl async_hash::Hash for Boolean {
+    type Context = ();
+    type Error = Infallible;
+
+    async fn hash(&self, cxt: &Self::Context) -> Result<Bytes, Self::Error> {
+        async_hash::Hash::hash(&self.0, cxt).await
     }
 }
 
@@ -370,6 +382,19 @@ impl FloatInstance for Complex {
         match self {
             Self::C32(c) => c.im.is_nan() || c.re.is_nan(),
             Self::C64(c) => c.im.is_nan() || c.re.is_nan(),
+        }
+    }
+}
+
+#[async_trait]
+impl async_hash::Hash for Complex {
+    type Context = ();
+    type Error = Infallible;
+
+    async fn hash(&self, cxt: &Self::Context) -> Result<Bytes, Self::Error> {
+        match self {
+            Self::C32(c) => async_hash::Hash::hash(&[c.re, c.im], cxt).await,
+            Self::C64(c) => async_hash::Hash::hash(&[c.re, c.im], cxt).await,
         }
     }
 }
@@ -1083,6 +1108,19 @@ impl PartialOrd for Float {
     }
 }
 
+#[async_trait]
+impl async_hash::Hash for Float {
+    type Context = ();
+    type Error = Infallible;
+
+    async fn hash(&self, cxt: &Self::Context) -> Result<Bytes, Self::Error> {
+        match self {
+            Self::F32(f) => async_hash::Hash::hash(f, cxt).await,
+            Self::F64(f) => async_hash::Hash::hash(f, cxt).await,
+        }
+    }
+}
+
 impl Default for Float {
     fn default() -> Float {
         Float::F32(f32::default())
@@ -1643,10 +1681,26 @@ impl PartialOrd for Int {
 impl Ord for Int {
     fn cmp(&self, other: &Self) -> Ordering {
         match (self, other) {
+            (Int::I8(l), Int::I8(r)) => l.cmp(r),
             (Int::I16(l), Int::I16(r)) => l.cmp(r),
             (Int::I32(l), Int::I32(r)) => l.cmp(r),
             (Int::I64(l), Int::I64(r)) => l.cmp(r),
             (l, r) => i64::from(*l).cmp(&i64::from(*r)),
+        }
+    }
+}
+
+#[async_trait]
+impl async_hash::Hash for Int {
+    type Context = ();
+    type Error = Infallible;
+
+    async fn hash(&self, cxt: &Self::Context) -> Result<Bytes, Self::Error> {
+        match self {
+            Self::I8(i) => async_hash::Hash::hash(i, cxt).await,
+            Self::I16(i) => async_hash::Hash::hash(i, cxt).await,
+            Self::I32(i) => async_hash::Hash::hash(i, cxt).await,
+            Self::I64(i) => async_hash::Hash::hash(i, cxt).await,
         }
     }
 }
@@ -2195,6 +2249,21 @@ impl Ord for UInt {
             (Self::U32(l), Self::U32(r)) => l.cmp(r),
             (Self::U64(l), Self::U64(r)) => l.cmp(r),
             (l, r) => u64::from(*l).cmp(&u64::from(*r)),
+        }
+    }
+}
+
+#[async_trait]
+impl async_hash::Hash for UInt {
+    type Context = ();
+    type Error = Infallible;
+
+    async fn hash(&self, cxt: &Self::Context) -> Result<Bytes, Self::Error> {
+        match self {
+            Self::U8(u) => async_hash::Hash::hash(u, cxt).await,
+            Self::U16(u) => async_hash::Hash::hash(u, cxt).await,
+            Self::U32(u) => async_hash::Hash::hash(u, cxt).await,
+            Self::U64(u) => async_hash::Hash::hash(u, cxt).await,
         }
     }
 }
