@@ -1,5 +1,4 @@
 use std::cmp::Ordering;
-use std::convert::Infallible;
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::iter::{Product, Sum};
@@ -7,7 +6,6 @@ use std::ops::*;
 use std::str::FromStr;
 
 use async_trait::async_trait;
-use bytes::Bytes;
 use collate::Collate;
 use destream::{Decoder, EncodeSeq, Encoder, FromStream, IntoStream, ToStream};
 use futures::TryFutureExt;
@@ -15,6 +13,7 @@ use num::traits::Pow;
 use safecast::*;
 use serde::ser::{Serialize, SerializeSeq, Serializer};
 use serde::{Deserialize, Deserializer};
+use sha2::digest::{Digest, Output};
 
 use super::class::*;
 use super::{Error, Number, _Complex};
@@ -92,13 +91,9 @@ impl Default for Boolean {
     }
 }
 
-#[async_trait]
-impl async_hash::Hash for Boolean {
-    type Context = ();
-    type Error = Infallible;
-
-    async fn hash(&self, cxt: &Self::Context) -> Result<Bytes, Self::Error> {
-        async_hash::Hash::hash(&self.0, cxt).await
+impl<D: Digest> async_hash::Hash<D> for Boolean {
+    fn hash(self) -> Output<D> {
+        async_hash::Hash::<D>::hash(self.0)
     }
 }
 
@@ -386,15 +381,11 @@ impl FloatInstance for Complex {
     }
 }
 
-#[async_trait]
-impl async_hash::Hash for Complex {
-    type Context = ();
-    type Error = Infallible;
-
-    async fn hash(&self, cxt: &Self::Context) -> Result<Bytes, Self::Error> {
+impl<D: Digest> async_hash::Hash<D> for Complex {
+    fn hash(self) -> Output<D> {
         match self {
-            Self::C32(c) => async_hash::Hash::hash(&[c.re, c.im], cxt).await,
-            Self::C64(c) => async_hash::Hash::hash(&[c.re, c.im], cxt).await,
+            Self::C32(c) => async_hash::Hash::<D>::hash([c.re, c.im]),
+            Self::C64(c) => async_hash::Hash::<D>::hash([c.re, c.im]),
         }
     }
 }
@@ -1108,15 +1099,11 @@ impl PartialOrd for Float {
     }
 }
 
-#[async_trait]
-impl async_hash::Hash for Float {
-    type Context = ();
-    type Error = Infallible;
-
-    async fn hash(&self, cxt: &Self::Context) -> Result<Bytes, Self::Error> {
+impl<D: Digest> async_hash::Hash<D> for Float {
+    fn hash(self) -> Output<D> {
         match self {
-            Self::F32(f) => async_hash::Hash::hash(f, cxt).await,
-            Self::F64(f) => async_hash::Hash::hash(f, cxt).await,
+            Self::F32(f) => async_hash::Hash::<D>::hash(f),
+            Self::F64(f) => async_hash::Hash::<D>::hash(f),
         }
     }
 }
@@ -1690,17 +1677,13 @@ impl Ord for Int {
     }
 }
 
-#[async_trait]
-impl async_hash::Hash for Int {
-    type Context = ();
-    type Error = Infallible;
-
-    async fn hash(&self, cxt: &Self::Context) -> Result<Bytes, Self::Error> {
+impl<D: Digest> async_hash::Hash<D> for Int {
+    fn hash(self) -> Output<D> {
         match self {
-            Self::I8(i) => async_hash::Hash::hash(i, cxt).await,
-            Self::I16(i) => async_hash::Hash::hash(i, cxt).await,
-            Self::I32(i) => async_hash::Hash::hash(i, cxt).await,
-            Self::I64(i) => async_hash::Hash::hash(i, cxt).await,
+            Self::I8(i) => async_hash::Hash::<D>::hash(i),
+            Self::I16(i) => async_hash::Hash::<D>::hash(i),
+            Self::I32(i) => async_hash::Hash::<D>::hash(i),
+            Self::I64(i) => async_hash::Hash::<D>::hash(i),
         }
     }
 }
@@ -2253,17 +2236,13 @@ impl Ord for UInt {
     }
 }
 
-#[async_trait]
-impl async_hash::Hash for UInt {
-    type Context = ();
-    type Error = Infallible;
-
-    async fn hash(&self, cxt: &Self::Context) -> Result<Bytes, Self::Error> {
+impl<D: Digest> async_hash::Hash<D> for UInt {
+    fn hash(self) -> Output<D> {
         match self {
-            Self::U8(u) => async_hash::Hash::hash(u, cxt).await,
-            Self::U16(u) => async_hash::Hash::hash(u, cxt).await,
-            Self::U32(u) => async_hash::Hash::hash(u, cxt).await,
-            Self::U64(u) => async_hash::Hash::hash(u, cxt).await,
+            Self::U8(u) => async_hash::Hash::<D>::hash(u),
+            Self::U16(u) => async_hash::Hash::<D>::hash(u),
+            Self::U32(u) => async_hash::Hash::<D>::hash(u),
+            Self::U64(u) => async_hash::Hash::<D>::hash(u),
         }
     }
 }
