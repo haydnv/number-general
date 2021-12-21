@@ -30,9 +30,10 @@ use safecast::{CastFrom, CastInto};
 use serde::de::Error as SerdeError;
 use serde::ser::Serializer;
 use serde::{Deserialize, Deserializer, Serialize};
-use sha2::digest::{Digest, Output};
 
 mod class;
+#[cfg(feature = "hash")]
+mod hash;
 mod instance;
 
 pub use class::*;
@@ -523,18 +524,6 @@ impl Trigonometry for Number {
     trig! {tan}
     trig! {atanh}
     trig! {tanh}
-}
-
-impl<D: Digest> async_hash::Hash<D> for Number {
-    fn hash(self) -> Output<D> {
-        match self {
-            Self::Bool(b) => async_hash::Hash::<D>::hash(b),
-            Self::Complex(c) => async_hash::Hash::<D>::hash(c),
-            Self::Float(f) => async_hash::Hash::<D>::hash(f),
-            Self::Int(i) => async_hash::Hash::<D>::hash(i),
-            Self::UInt(u) => async_hash::Hash::<D>::hash(u),
-        }
-    }
 }
 
 impl Default for Number {

@@ -13,7 +13,6 @@ use num::traits::Pow;
 use safecast::*;
 use serde::ser::{Serialize, SerializeSeq, Serializer};
 use serde::{Deserialize, Deserializer};
-use sha2::digest::{Digest, Output};
 
 use super::class::*;
 use super::{Error, Number, _Complex};
@@ -88,12 +87,6 @@ impl RealInstance for Boolean {
 impl Default for Boolean {
     fn default() -> Boolean {
         Self(false)
-    }
-}
-
-impl<D: Digest> async_hash::Hash<D> for Boolean {
-    fn hash(self) -> Output<D> {
-        async_hash::Hash::<D>::hash(self.0)
     }
 }
 
@@ -377,15 +370,6 @@ impl FloatInstance for Complex {
         match self {
             Self::C32(c) => c.im.is_nan() || c.re.is_nan(),
             Self::C64(c) => c.im.is_nan() || c.re.is_nan(),
-        }
-    }
-}
-
-impl<D: Digest> async_hash::Hash<D> for Complex {
-    fn hash(self) -> Output<D> {
-        match self {
-            Self::C32(c) => async_hash::Hash::<D>::hash([c.re, c.im]),
-            Self::C64(c) => async_hash::Hash::<D>::hash([c.re, c.im]),
         }
     }
 }
@@ -1099,15 +1083,6 @@ impl PartialOrd for Float {
     }
 }
 
-impl<D: Digest> async_hash::Hash<D> for Float {
-    fn hash(self) -> Output<D> {
-        match self {
-            Self::F32(f) => async_hash::Hash::<D>::hash(f),
-            Self::F64(f) => async_hash::Hash::<D>::hash(f),
-        }
-    }
-}
-
 impl Default for Float {
     fn default() -> Float {
         Float::F32(f32::default())
@@ -1677,17 +1652,6 @@ impl Ord for Int {
     }
 }
 
-impl<D: Digest> async_hash::Hash<D> for Int {
-    fn hash(self) -> Output<D> {
-        match self {
-            Self::I8(i) => async_hash::Hash::<D>::hash(i),
-            Self::I16(i) => async_hash::Hash::<D>::hash(i),
-            Self::I32(i) => async_hash::Hash::<D>::hash(i),
-            Self::I64(i) => async_hash::Hash::<D>::hash(i),
-        }
-    }
-}
-
 impl Default for Int {
     fn default() -> Int {
         Int::I16(i16::default())
@@ -2232,17 +2196,6 @@ impl Ord for UInt {
             (Self::U32(l), Self::U32(r)) => l.cmp(r),
             (Self::U64(l), Self::U64(r)) => l.cmp(r),
             (l, r) => u64::from(*l).cmp(&u64::from(*r)),
-        }
-    }
-}
-
-impl<D: Digest> async_hash::Hash<D> for UInt {
-    fn hash(self) -> Output<D> {
-        match self {
-            Self::U8(u) => async_hash::Hash::<D>::hash(u),
-            Self::U16(u) => async_hash::Hash::<D>::hash(u),
-            Self::U32(u) => async_hash::Hash::<D>::hash(u),
-            Self::U64(u) => async_hash::Hash::<D>::hash(u),
         }
     }
 }

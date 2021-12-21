@@ -11,8 +11,11 @@ repository = "https://github.com/haydnv/number-general.git"
 categories = ["data-structures", "mathematics"]
 keywords = ["number", "complex", "float", "integer", "unsigned"]
 
+[features]
+hash = ["async-hash", "sha2"]
+
 [dependencies]
-async-hash = "0.2"
+async-hash = { version = "0.2", optional = true }
 async-trait = "0.1"
 collate = ">=0.1.2"
 destream = "0.5"
@@ -20,7 +23,7 @@ futures = "0.3"
 num = "0.2"
 safecast = "0.1"
 serde = { version = "1.0", features = ["derive"] }
-sha2 = "0.10"
+sha2 = { version = "0.10", optional = true }
 
 [dev-dependencies]
 bytes = "1.0"
