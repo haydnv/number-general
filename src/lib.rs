@@ -22,16 +22,15 @@ use std::iter::{Product, Sum};
 use std::ops::*;
 use std::str::FromStr;
 
-use async_trait::async_trait;
 use collate::*;
-use destream::de::{Decoder, Error as DestreamError, FromStream};
-use destream::en::{IntoStream, ToStream};
 use safecast::{CastFrom, CastInto};
 use serde::de::Error as SerdeError;
 use serde::ser::Serializer;
 use serde::{Deserialize, Deserializer, Serialize};
 
 mod class;
+#[cfg(feature = "stream")]
+mod destream;
 #[cfg(feature = "hash")]
 mod hash;
 mod instance;
@@ -905,7 +904,7 @@ impl<'de> serde::de::Visitor<'de> for NumberVisitor {
 
     #[inline]
     fn visit_i32<E: SerdeError>(self, i: i32) -> Result<Self::Value, E> {
-        Ok(Number::Int(Int::I32(i)))
+        self.i32(i)
     }
 
     #[inline]
@@ -962,109 +961,11 @@ impl<'de> serde::de::Visitor<'de> for NumberVisitor {
     }
 }
 
-#[async_trait]
-impl destream::de::Visitor for NumberVisitor {
-    type Value = Number;
-
-    fn expecting() -> &'static str {
-        ERR_NUMBER
-    }
-
-    #[inline]
-    fn visit_bool<E: DestreamError>(self, b: bool) -> Result<Self::Value, E> {
-        self.bool(b)
-    }
-
-    #[inline]
-    fn visit_i8<E: DestreamError>(self, i: i8) -> Result<Self::Value, E> {
-        self.i8(i)
-    }
-
-    #[inline]
-    fn visit_i16<E: DestreamError>(self, i: i16) -> Result<Self::Value, E> {
-        self.i16(i)
-    }
-
-    #[inline]
-    fn visit_i32<E: DestreamError>(self, i: i32) -> Result<Self::Value, E> {
-        self.i32(i)
-    }
-
-    #[inline]
-    fn visit_i64<E: DestreamError>(self, i: i64) -> Result<Self::Value, E> {
-        self.i64(i)
-    }
-
-    #[inline]
-    fn visit_u8<E: DestreamError>(self, u: u8) -> Result<Self::Value, E> {
-        self.u8(u)
-    }
-
-    #[inline]
-    fn visit_u16<E: DestreamError>(self, u: u16) -> Result<Self::Value, E> {
-        self.u16(u)
-    }
-
-    #[inline]
-    fn visit_u32<E: DestreamError>(self, u: u32) -> Result<Self::Value, E> {
-        self.u32(u)
-    }
-
-    #[inline]
-    fn visit_u64<E: DestreamError>(self, u: u64) -> Result<Self::Value, E> {
-        self.u64(u)
-    }
-
-    #[inline]
-    fn visit_f32<E: DestreamError>(self, f: f32) -> Result<Self::Value, E> {
-        self.f32(f)
-    }
-
-    #[inline]
-    fn visit_f64<E: DestreamError>(self, f: f64) -> Result<Self::Value, E> {
-        self.f64(f)
-    }
-
-    #[inline]
-    fn visit_string<E: DestreamError>(self, s: String) -> Result<Self::Value, E> {
-        s.parse().map_err(destream::de::Error::custom)
-    }
-
-    async fn visit_seq<A: destream::de::SeqAccess>(
-        self,
-        mut seq: A,
-    ) -> Result<Self::Value, A::Error> {
-        let re = seq
-            .next_element(())
-            .await?
-            .ok_or_else(|| DestreamError::invalid_length(0, ERR_COMPLEX))?;
-
-        let im = seq
-            .next_element(())
-            .await?
-            .ok_or_else(|| DestreamError::invalid_length(1, ERR_COMPLEX))?;
-
-        Ok(Number::Complex(Complex::C64(_Complex::<f64>::new(re, im))))
-    }
-}
-
 impl<'de> Deserialize<'de> for Number {
     fn deserialize<D: Deserializer<'de>>(
         deserializer: D,
     ) -> Result<Self, <D as Deserializer<'de>>::Error> {
         deserializer.deserialize_any(NumberVisitor)
-    }
-}
-
-#[async_trait]
-impl FromStream for Number {
-    type Context = ();
-
-    async fn from_stream<D: Decoder>(
-        _context: (),
-        decoder: &mut D,
-    ) -> Result<Self, <D as Decoder>::Error> {
-        decoder.decode_any(NumberVisitor).await
     }
 }
 
@@ -1076,30 +977,6 @@ impl Serialize for Number {
             Number::Float(f) => f.serialize(s),
             Number::Int(i) => i.serialize(s),
             Number::UInt(u) => u.serialize(s),
-        }
-    }
-}
-
-impl<'en> ToStream<'en> for Number {
-    fn to_stream<E: destream::Encoder<'en>>(&'en self, e: E) -> Result<E::Ok, E::Error> {
-        match self {
-            Number::Bool(b) => b.to_stream(e),
-            Number::Complex(c) => c.to_stream(e),
-            Number::Float(f) => f.to_stream(e),
-            Number::Int(i) => i.to_stream(e),
-            Number::UInt(u) => u.to_stream(e),
-        }
-    }
-}
-
-impl<'en> IntoStream<'en> for Number {
-    fn into_stream<E: destream::Encoder<'en>>(self, e: E) -> Result<E::Ok, E::Error> {
-        match self {
-            Number::Bool(b) => b.into_stream(e),
-            Number::Complex(c) => c.into_stream(e),
-            Number::Float(f) => f.into_stream(e),
-            Number::Int(i) => i.into_stream(e),
-            Number::UInt(u) => u.into_stream(e),
         }
     }
 }
@@ -1124,11 +1001,6 @@ impl fmt::Display for Number {
 
 #[cfg(test)]
 mod tests {
-    use bytes::Bytes;
-    use futures::executor::block_on;
-    use futures::future::{self, FutureExt};
-    use futures::stream::{self, StreamExt};
-
     use super::*;
 
     #[test]
@@ -1216,40 +1088,6 @@ mod tests {
 
             assert_eq!(expected, &actual);
         }
-    }
-
-    #[test]
-    fn test_encode() {
-        let numbers = vec![
-            Number::from(false),
-            Number::from(12u16),
-            Number::from(-3),
-            Number::from(3.14),
-            Number::from(1e-6),
-            Number::from(_Complex::<f32>::new(0., -1.414)),
-        ];
-
-        let encoded = destream_json::encode(&numbers)
-            .unwrap()
-            .map(|r| r.unwrap())
-            .fold(vec![], |mut s, c| {
-                s.extend(c);
-                future::ready(s)
-            })
-            .map(Bytes::from);
-
-        let deserialized: Vec<Number> =
-            block_on(destream_json::decode((), stream::once(encoded))).unwrap();
-
-        assert_eq!(deserialized, numbers);
-
-        let fp: f64 = block_on(destream_json::decode(
-            (),
-            stream::once(future::ready(Bytes::copy_from_slice(b"1e-6"))),
-        ))
-        .unwrap();
-
-        assert_eq!(fp, 1e-6);
     }
 
     #[test]

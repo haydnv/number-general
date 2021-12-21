@@ -5,10 +5,7 @@ use std::iter::{Product, Sum};
 use std::ops::*;
 use std::str::FromStr;
 
-use async_trait::async_trait;
 use collate::Collate;
-use destream::{Decoder, EncodeSeq, Encoder, FromStream, IntoStream, ToStream};
-use futures::TryFutureExt;
 use num::traits::Pow;
 use safecast::*;
 use serde::ser::{Serialize, SerializeSeq, Serializer};
@@ -262,30 +259,6 @@ impl<'de> Deserialize<'de> for Boolean {
         D: Deserializer<'de>,
     {
         bool::deserialize(deserializer).map(Self::from)
-    }
-}
-
-#[async_trait]
-impl FromStream for Boolean {
-    type Context = ();
-
-    async fn from_stream<D: Decoder>(
-        cxt: Self::Context,
-        decoder: &mut D,
-    ) -> Result<Self, D::Error> {
-        bool::from_stream(cxt, decoder).map_ok(Self::from).await
-    }
-}
-
-impl<'en> ToStream<'en> for Boolean {
-    fn to_stream<E: Encoder<'en>>(&'en self, e: E) -> Result<E::Ok, E::Error> {
-        e.encode_bool(self.0)
-    }
-}
-
-impl<'en> IntoStream<'en> for Boolean {
-    fn into_stream<E: Encoder<'en>>(self, e: E) -> Result<E::Ok, E::Error> {
-        e.encode_bool(self.0)
     }
 }
 
@@ -729,57 +702,6 @@ impl Serialize for Complex {
     }
 }
 
-#[async_trait]
-impl FromStream for Complex {
-    type Context = ();
-
-    async fn from_stream<D: Decoder>(
-        cxt: Self::Context,
-        decoder: &mut D,
-    ) -> Result<Self, D::Error> {
-        let [re, im]: [f64; 2] = FromStream::from_stream(cxt, decoder).await?;
-        Ok(num::Complex::new(re, im).into())
-    }
-}
-
-impl<'en> ToStream<'en> for Complex {
-    fn to_stream<E: Encoder<'en>>(&'en self, e: E) -> Result<E::Ok, E::Error> {
-        match self {
-            Complex::C32(c) => {
-                let mut seq = e.encode_seq(Some(2))?;
-                seq.encode_element(&c.re)?;
-                seq.encode_element(&c.im)?;
-                seq.end()
-            }
-            Complex::C64(c) => {
-                let mut seq = e.encode_seq(Some(2))?;
-                seq.encode_element(&c.re)?;
-                seq.encode_element(&c.im)?;
-                seq.end()
-            }
-        }
-    }
-}
-
-impl<'en> IntoStream<'en> for Complex {
-    fn into_stream<E: Encoder<'en>>(self, e: E) -> Result<E::Ok, E::Error> {
-        match self {
-            Complex::C32(c) => {
-                let mut seq = e.encode_seq(Some(2))?;
-                seq.encode_element(c.re)?;
-                seq.encode_element(c.im)?;
-                seq.end()
-            }
-            Complex::C64(c) => {
-                let mut seq = e.encode_seq(Some(2))?;
-                seq.encode_element(c.re)?;
-                seq.encode_element(c.im)?;
-                seq.end()
-            }
-        }
-    }
-}
-
 impl fmt::Debug for Complex {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}: {}", self.class(), self)
@@ -1195,36 +1117,6 @@ impl Serialize for Float {
         match self {
             Float::F32(f) => s.serialize_f32(*f),
             Float::F64(f) => s.serialize_f64(*f),
-        }
-    }
-}
-
-#[async_trait]
-impl FromStream for Float {
-    type Context = ();
-
-    async fn from_stream<D: Decoder>(
-        cxt: Self::Context,
-        decoder: &mut D,
-    ) -> Result<Self, D::Error> {
-        f64::from_stream(cxt, decoder).map_ok(Self::from).await
-    }
-}
-
-impl<'en> ToStream<'en> for Float {
-    fn to_stream<E: Encoder<'en>>(&'en self, e: E) -> Result<E::Ok, E::Error> {
-        match *self {
-            Float::F32(f) => e.encode_f32(f),
-            Float::F64(f) => e.encode_f64(f),
-        }
-    }
-}
-
-impl<'en> IntoStream<'en> for Float {
-    fn into_stream<E: Encoder<'en>>(self, e: E) -> Result<E::Ok, E::Error> {
-        match self {
-            Float::F32(f) => e.encode_f32(f),
-            Float::F64(f) => e.encode_f64(f),
         }
     }
 }
@@ -1741,40 +1633,6 @@ impl Serialize for Int {
     }
 }
 
-#[async_trait]
-impl FromStream for Int {
-    type Context = ();
-
-    async fn from_stream<D: Decoder>(
-        cxt: Self::Context,
-        decoder: &mut D,
-    ) -> Result<Self, D::Error> {
-        i64::from_stream(cxt, decoder).map_ok(Self::from).await
-    }
-}
-
-impl<'en> ToStream<'en> for Int {
-    fn to_stream<E: Encoder<'en>>(&'en self, e: E) -> Result<E::Ok, E::Error> {
-        match *self {
-            Int::I8(i) => e.encode_i8(i),
-            Int::I16(i) => e.encode_i16(i),
-            Int::I32(i) => e.encode_i32(i),
-            Int::I64(i) => e.encode_i64(i),
-        }
-    }
-}
-
-impl<'en> IntoStream<'en> for Int {
-    fn into_stream<E: Encoder<'en>>(self, e: E) -> Result<E::Ok, E::Error> {
-        match self {
-            Int::I8(i) => e.encode_i8(i),
-            Int::I16(i) => e.encode_i16(i),
-            Int::I32(i) => e.encode_i32(i),
-            Int::I64(i) => e.encode_i64(i),
-        }
-    }
-}
-
 impl fmt::Debug for Int {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}: {}", self.class(), self)
@@ -2285,40 +2143,6 @@ impl Serialize for UInt {
             UInt::U16(u) => s.serialize_u16(*u),
             UInt::U32(u) => s.serialize_u32(*u),
             UInt::U64(u) => s.serialize_u64(*u),
-        }
-    }
-}
-
-#[async_trait]
-impl FromStream for UInt {
-    type Context = ();
-
-    async fn from_stream<D: Decoder>(
-        cxt: Self::Context,
-        decoder: &mut D,
-    ) -> Result<Self, D::Error> {
-        u64::from_stream(cxt, decoder).map_ok(Self::from).await
-    }
-}
-
-impl<'en> ToStream<'en> for UInt {
-    fn to_stream<E: Encoder<'en>>(&'en self, e: E) -> Result<E::Ok, E::Error> {
-        match *self {
-            UInt::U8(u) => e.encode_u8(u),
-            UInt::U16(u) => e.encode_u16(u),
-            UInt::U32(u) => e.encode_u32(u),
-            UInt::U64(u) => e.encode_u64(u),
-        }
-    }
-}
-
-impl<'en> IntoStream<'en> for UInt {
-    fn into_stream<E: Encoder<'en>>(self, e: E) -> Result<E::Ok, E::Error> {
-        match self {
-            UInt::U8(u) => e.encode_u8(u),
-            UInt::U16(u) => e.encode_u16(u),
-            UInt::U32(u) => e.encode_u32(u),
-            UInt::U64(u) => e.encode_u64(u),
         }
     }
 }
