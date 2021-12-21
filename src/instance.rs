@@ -8,8 +8,6 @@ use std::str::FromStr;
 use collate::Collate;
 use num::traits::Pow;
 use safecast::*;
-use serde::ser::{Serialize, SerializeSeq, Serializer};
-use serde::{Deserialize, Deserializer};
 
 use super::class::*;
 use super::{Error, Number, _Complex};
@@ -247,21 +245,6 @@ impl fmt::Display for Boolean {
     }
 }
 
-impl Serialize for Boolean {
-    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        s.serialize_bool(self.0)
-    }
-}
-
-impl<'de> Deserialize<'de> for Boolean {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        bool::deserialize(deserializer).map(Self::from)
-    }
-}
-
 /// A complex number.
 #[derive(Clone, Copy)]
 pub enum Complex {
@@ -347,26 +330,26 @@ impl FloatInstance for Complex {
     }
 }
 
-impl CastFrom<[f32; 2]> for Complex {
-    fn cast_from(arr: [f32; 2]) -> Self {
+impl From<[f32; 2]> for Complex {
+    fn from(arr: [f32; 2]) -> Self {
         Self::C32(num::Complex::new(arr[0], arr[1]))
     }
 }
 
-impl CastFrom<[f64; 2]> for Complex {
-    fn cast_from(arr: [f64; 2]) -> Self {
+impl From<[f64; 2]> for Complex {
+    fn from(arr: [f64; 2]) -> Self {
         Self::C64(num::Complex::new(arr[0], arr[1]))
     }
 }
 
-impl<R, I> CastFrom<(R, I)> for Complex
+impl<R, I> From<(R, I)> for Complex
 where
-    R: CastInto<f64>,
-    I: CastInto<f64>,
+    R: Into<f64>,
+    I: Into<f64>,
 {
-    fn cast_from(value: (R, I)) -> Self {
-        let re = value.0.cast_into();
-        let im = value.1.cast_into();
+    fn from(value: (R, I)) -> Self {
+        let re = value.0.into();
+        let im = value.1.into();
         Self::C64(num::Complex::new(re, im))
     }
 }
@@ -670,35 +653,6 @@ impl FromStr for Complex {
         num::Complex::<f64>::from_str(s)
             .map(Self::from)
             .map_err(Error::new)
-    }
-}
-
-impl<'de> Deserialize<'de> for Complex {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let [re, im]: [f64; 2] = Deserialize::deserialize(deserializer)?;
-        Ok(num::Complex::new(re, im).into())
-    }
-}
-
-impl Serialize for Complex {
-    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        match self {
-            Complex::C32(c) => {
-                let mut seq = s.serialize_seq(Some(2))?;
-                seq.serialize_element(&c.re)?;
-                seq.serialize_element(&c.im)?;
-                seq.end()
-            }
-            Complex::C64(c) => {
-                let mut seq = s.serialize_seq(Some(2))?;
-                seq.serialize_element(&c.re)?;
-                seq.serialize_element(&c.im)?;
-                seq.end()
-            }
-        }
     }
 }
 
@@ -1099,24 +1053,6 @@ impl From<Float> for f64 {
         match f {
             Float::F32(f) => f as f64,
             Float::F64(f) => f,
-        }
-    }
-}
-
-impl<'de> Deserialize<'de> for Float {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        f64::deserialize(deserializer).map(Self::from)
-    }
-}
-
-impl Serialize for Float {
-    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        match self {
-            Float::F32(f) => s.serialize_f32(*f),
-            Float::F64(f) => s.serialize_f64(*f),
         }
     }
 }
@@ -1613,26 +1549,6 @@ impl FromStr for Int {
     }
 }
 
-impl<'de> Deserialize<'de> for Int {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        i64::deserialize(deserializer).map(Self::from)
-    }
-}
-
-impl Serialize for Int {
-    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        match self {
-            Int::I8(i) => s.serialize_i8(*i),
-            Int::I16(i) => s.serialize_i16(*i),
-            Int::I32(i) => s.serialize_i32(*i),
-            Int::I64(i) => s.serialize_i64(*i),
-        }
-    }
-}
-
 impl fmt::Debug for Int {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}: {}", self.class(), self)
@@ -2124,26 +2040,6 @@ impl FromStr for UInt {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         u64::from_str(s).map(Self::from).map_err(Error::new)
-    }
-}
-
-impl<'de> Deserialize<'de> for UInt {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        u64::deserialize(deserializer).map(Self::from)
-    }
-}
-
-impl Serialize for UInt {
-    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        match self {
-            UInt::U8(u) => s.serialize_u8(*u),
-            UInt::U16(u) => s.serialize_u16(*u),
-            UInt::U32(u) => s.serialize_u32(*u),
-            UInt::U64(u) => s.serialize_u64(*u),
-        }
     }
 }
 

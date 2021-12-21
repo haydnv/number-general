@@ -4,6 +4,7 @@ use std::iter::{Product, Sum};
 use std::ops::*;
 
 use safecast::*;
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use super::instance::{Boolean, Complex, Float, Int, UInt};
@@ -188,7 +189,8 @@ pub trait FloatInstance {
 }
 
 /// The type of a [`Complex`] number.
-#[derive(Clone, Copy, Hash, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Copy, Hash, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum ComplexType {
     C32,
     C64,
@@ -285,7 +287,8 @@ impl fmt::Display for ComplexType {
 }
 
 /// The type of a [`Boolean`].
-#[derive(Clone, Copy, Default, Hash, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Copy, Default, Hash, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct BooleanType;
 
 impl NumberClass for BooleanType {
@@ -339,7 +342,8 @@ impl fmt::Display for BooleanType {
 }
 
 /// The type of a [`Float`].
-#[derive(Clone, Copy, Hash, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Copy, Hash, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum FloatType {
     F32,
     F64,
@@ -433,7 +437,8 @@ impl fmt::Display for FloatType {
 }
 
 /// The type of an [`Int`].
-#[derive(Clone, Copy, Hash, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Copy, Hash, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum IntType {
     I8,
     I16,
@@ -543,7 +548,8 @@ impl fmt::Display for IntType {
 }
 
 /// The type of a [`UInt`].
-#[derive(Clone, Copy, Hash, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Copy, Hash, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum UIntType {
     U8,
     U16,
@@ -657,7 +663,8 @@ impl fmt::Display for UIntType {
 }
 
 /// The type of a generic [`Number`].
-#[derive(Clone, Copy, Hash, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Copy, Hash, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum NumberType {
     Bool,
     Complex(ComplexType),

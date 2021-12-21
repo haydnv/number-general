@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use destream::de::{self, Decoder, FromStream};
+use destream::de::{self, Decoder, FromStream, Visitor};
 use destream::en::{EncodeSeq, Encoder, IntoStream, ToStream};
 use futures::TryFutureExt;
 
@@ -181,7 +181,7 @@ impl<'en> IntoStream<'en> for UInt {
 }
 
 #[async_trait]
-impl destream::de::Visitor for NumberVisitor {
+impl Visitor for NumberVisitor {
     type Value = Number;
 
     fn expecting() -> &'static str {

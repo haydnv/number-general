@@ -2,18 +2,22 @@
 //! and [`UInt`] variants, as well as a [`NumberCollator`], [`ComplexCollator`], and
 //! [`FloatCollator`] since these types do not implement [`Ord`].
 //!
-//! `Number` supports casting with [`safecast`] and (de)serialization with [`serde`].
+//! `Number` supports casting with [`safecast`].
+//!
+//! For (de)serialization with `serde`, enable the `"serde"` feature.
+//!
+//! For (de)coding with `destream`, enable the `"stream"` feature.
 //!
 //! Example usage:
 //! ```
 //! # use number_general::{Int, Number};
 //! # use safecast::CastFrom;
-//! let sequence: Vec<Number> = serde_json::from_str("[true, 2, 3.5, -4, [1.0, -0.5]]").unwrap();
+//! let sequence: Vec<Number> = vec![true.into(), 2.into(), 3.5.into(), [1.0, -0.5].into()];
 //! let actual = sequence.into_iter().product();
-//! let expected = Number::from(num::Complex::<f64>::new(-28., 14.));
+//! let expected = Number::from(num::Complex::<f64>::new(7., -3.5));
 //!
 //! assert_eq!(expected, actual);
-//! assert_eq!(Int::cast_from(actual), Int::from(-28));
+//! assert_eq!(Int::cast_from(actual), Int::from(7));
 //! ```
 
 use std::cmp::Ordering;
@@ -24,9 +28,6 @@ use std::str::FromStr;
 
 use collate::*;
 use safecast::{CastFrom, CastInto};
-use serde::de::Error as SerdeError;
-use serde::ser::Serializer;
-use serde::{Deserialize, Deserializer, Serialize};
 
 mod class;
 #[cfg(feature = "stream")]
@@ -34,9 +35,17 @@ mod destream;
 #[cfg(feature = "hash")]
 mod hash;
 mod instance;
+#[cfg(feature = "serde")]
+mod serde;
 
 pub use class::*;
 pub use instance::*;
+
+#[cfg(any(feature = "serde", feature = "stream"))]
+const ERR_COMPLEX: & str = "a complex number";
+
+#[cfg(any(feature = "serde", feature = "stream"))]
+const ERR_NUMBER: & str = "a Number, like 1 or -2 or 3.14 or [0., -1.414]";
 
 /// Define a [`NumberType`] for a non-[`Number`] type such as a Rust primitive.
 ///
@@ -93,9 +102,6 @@ impl fmt::Display for Error {
 }
 
 type _Complex<T> = num::complex::Complex<T>;
-
-const ERR_COMPLEX: &str = "a complex number";
-const ERR_NUMBER: &str = "a Number, like 1 or -2 or 3.14 or [0., -1.414]";
 
 /// A generic number.
 #[derive(Clone, Copy, Eq, Hash)]
@@ -621,6 +627,18 @@ impl From<Float> for Number {
     }
 }
 
+impl From<[f32; 2]> for Number {
+    fn from(arr: [f32; 2]) -> Self {
+        Self::Complex(arr.into())
+    }
+}
+
+impl From<[f64; 2]> for Number {
+    fn from(arr: [f64; 2]) -> Self {
+        Self::Complex(arr.into())
+    }
+}
+
 impl From<_Complex<f32>> for Number {
     fn from(c: _Complex<f32>) -> Self {
         Self::Complex(c.into())
@@ -821,8 +839,10 @@ impl Collate for NumberCollator {
 
 /// A struct for deserializing a `Number` which implements
 /// [`destream::de::Visitor`] and [`serde::de::Visitor`].
+#[cfg(any(feature = "serde", feature = "stream"))]
 pub struct NumberVisitor;
 
+#[cfg(any(feature = "serde", feature = "stream"))]
 impl NumberVisitor {
     #[inline]
     fn bool<E>(self, b: bool) -> Result<Number, E> {
@@ -877,107 +897,6 @@ impl NumberVisitor {
     #[inline]
     fn f64<E>(self, f: f64) -> Result<Number, E> {
         Ok(Number::Float(Float::F64(f)))
-    }
-}
-
-impl<'de> serde::de::Visitor<'de> for NumberVisitor {
-    type Value = Number;
-
-    fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(ERR_NUMBER)
-    }
-
-    #[inline]
-    fn visit_bool<E: SerdeError>(self, b: bool) -> Result<Self::Value, E> {
-        self.bool(b)
-    }
-
-    #[inline]
-    fn visit_i8<E: SerdeError>(self, i: i8) -> Result<Self::Value, E> {
-        self.i8(i)
-    }
-
-    #[inline]
-    fn visit_i16<E: SerdeError>(self, i: i16) -> Result<Self::Value, E> {
-        self.i16(i)
-    }
-
-    #[inline]
-    fn visit_i32<E: SerdeError>(self, i: i32) -> Result<Self::Value, E> {
-        self.i32(i)
-    }
-
-    #[inline]
-    fn visit_i64<E: SerdeError>(self, i: i64) -> Result<Self::Value, E> {
-        self.i64(i)
-    }
-
-    #[inline]
-    fn visit_u8<E: SerdeError>(self, u: u8) -> Result<Self::Value, E> {
-        self.u8(u)
-    }
-
-    #[inline]
-    fn visit_u16<E: SerdeError>(self, u: u16) -> Result<Self::Value, E> {
-        self.u16(u)
-    }
-
-    #[inline]
-    fn visit_u32<E: SerdeError>(self, u: u32) -> Result<Self::Value, E> {
-        self.u32(u)
-    }
-
-    #[inline]
-    fn visit_u64<E>(self, u: u64) -> Result<Self::Value, E> {
-        self.u64(u)
-    }
-
-    #[inline]
-    fn visit_f32<E>(self, f: f32) -> Result<Self::Value, E> {
-        self.f32(f)
-    }
-
-    #[inline]
-    fn visit_f64<E>(self, f: f64) -> Result<Self::Value, E> {
-        self.f64(f)
-    }
-
-    #[inline]
-    fn visit_str<E: SerdeError>(self, s: &str) -> Result<Self::Value, E> {
-        s.parse().map_err(serde::de::Error::custom)
-    }
-
-    #[inline]
-    fn visit_seq<A: serde::de::SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
-        let re = seq
-            .next_element()?
-            .ok_or_else(|| SerdeError::invalid_length(0, &ERR_COMPLEX))?;
-
-        let im = seq
-            .next_element()?
-            .ok_or_else(|| SerdeError::invalid_length(1, &ERR_COMPLEX))?;
-
-        Ok(Number::Complex(Complex::C64(_Complex::<f64>::new(re, im))))
-    }
-}
-
-impl<'de> Deserialize<'de> for Number {
-    fn deserialize<D: Deserializer<'de>>(
-        deserializer: D,
-    ) -> Result<Self, <D as Deserializer<'de>>::Error> {
-        deserializer.deserialize_any(NumberVisitor)
-    }
-}
-
-impl Serialize for Number {
-    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        match self {
-            Number::Bool(b) => b.serialize(s),
-            Number::Complex(c) => c.serialize(s),
-            Number::Float(f) => f.serialize(s),
-            Number::Int(i) => i.serialize(s),
-            Number::UInt(u) => u.serialize(s),
-        }
     }
 }
 
@@ -1070,24 +989,6 @@ mod tests {
             3
         );
         assert_eq!(collator.bisect_right(&numbers, &[Number::from(5.1)]), 5);
-    }
-
-    #[test]
-    fn test_serialize() {
-        let numbers = [
-            Number::from(false),
-            Number::from(12u16),
-            Number::from(-3),
-            Number::from(3.14),
-            Number::from(_Complex::<f32>::new(0., -1.414)),
-        ];
-
-        for expected in &numbers {
-            let serialized = serde_json::to_string(expected).unwrap();
-            let actual = serde_json::from_str(&serialized).unwrap();
-
-            assert_eq!(expected, &actual);
-        }
     }
 
     #[test]
