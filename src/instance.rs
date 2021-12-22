@@ -50,6 +50,10 @@ impl NumberInstance for Boolean {
         Float::cast_from(self).exp()
     }
 
+    fn ln(self) -> Self::Log {
+        Float::cast_from(self).ln()
+    }
+
     fn log<N: NumberInstance>(self, base: N) -> Self::Log
     where
         Float: From<N>,
@@ -299,6 +303,13 @@ impl NumberInstance for Complex {
         match self {
             Self::C32(c) => Self::C32(c.exp()),
             Self::C64(c) => Self::C64(c.exp()),
+        }
+    }
+
+    fn ln(self) -> Self::Log {
+        match self {
+            Self::C32(c) => c.ln().into(),
+            Self::C64(c) => c.ln().into(),
         }
     }
 
@@ -753,6 +764,13 @@ impl NumberInstance for Float {
         }
     }
 
+    fn ln(self) -> Self::Log {
+        match self {
+            Self::F32(f) => f.ln().into(),
+            Self::F64(f) => f.ln().into(),
+        }
+    }
+
     fn log<N: NumberInstance>(self, base: N) -> Self::Log
     where
         Float: From<N>,
@@ -1195,6 +1213,10 @@ impl NumberInstance for Int {
 
     fn exp(self) -> Self::Exp {
         Float::from(self).exp()
+    }
+
+    fn ln(self) -> Self::Log {
+        Float::from(self).ln()
     }
 
     fn log<N: NumberInstance>(self, base: N) -> Self::Log
@@ -1666,6 +1688,10 @@ impl NumberInstance for UInt {
 
     fn exp(self) -> Self::Exp {
         Float::from(self).exp()
+    }
+
+    fn ln(self) -> Self::Log {
+        Float::from(self).ln()
     }
 
     fn log<N: NumberInstance>(self, base: N) -> Self::Log

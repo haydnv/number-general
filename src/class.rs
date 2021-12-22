@@ -77,6 +77,9 @@ pub trait NumberInstance:
     /// Raise `e` to the power of this number.
     fn exp(self) -> Self::Exp;
 
+    /// Compute the natural logarithm of this number.
+    fn ln(self) -> Self::Log;
+
     /// Compute the logarithm of this number with respect to the given `base`.
     fn log<N: NumberInstance>(self, base: N) -> Self::Log
     where

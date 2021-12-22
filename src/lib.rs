@@ -186,6 +186,16 @@ impl NumberInstance for Number {
         }
     }
 
+    fn ln(self) -> Self::Log {
+        match self {
+            Self::Bool(b) => b.ln().into(),
+            Self::Complex(this) => this.ln().into(),
+            Self::Float(this) => this.ln().into(),
+            Self::Int(this) => this.ln().into(),
+            Self::UInt(this) => this.ln().into(),
+        }
+    }
+
     fn log<N: NumberInstance>(self, base: N) -> Self::Log
     where
         Float: From<N>,
@@ -966,6 +976,7 @@ mod tests {
             assert_eq!(two, (one * two) / one);
             assert_eq!(zero, one * zero);
             assert_eq!(two.log(Float::cast_from(two)), one);
+            assert_eq!(two.ln() / two.ln(), one);
 
             if one.is_real() {
                 assert_eq!(one, one.pow(zero));
