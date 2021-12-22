@@ -59,6 +59,7 @@ pub trait NumberInstance:
 {
     type Abs: NumberInstance;
     type Exp: NumberInstance;
+    type Log: NumberInstance;
     type Class: NumberClass<Instance = Self>;
 
     /// Get an impl of [`NumberClass`] describing this number.
@@ -75,6 +76,11 @@ pub trait NumberInstance:
 
     /// Raise `e` to the power of this number.
     fn exp(self) -> Self::Exp;
+
+    /// Compute the logarithm of this number with respect to the given `base`.
+    fn log<N: NumberInstance>(self, base: N) -> Self::Log
+    where
+        Float: From<N>;
 
     /// Raise this number to the given exponent.
     ///

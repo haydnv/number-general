@@ -31,6 +31,7 @@ impl Boolean {
 impl NumberInstance for Boolean {
     type Abs = Self;
     type Exp = Float;
+    type Log = Float;
     type Class = BooleanType;
 
     fn class(&self) -> BooleanType {
@@ -47,6 +48,13 @@ impl NumberInstance for Boolean {
 
     fn exp(self) -> Self::Exp {
         Float::cast_from(self).exp()
+    }
+
+    fn log<N: NumberInstance>(self, base: N) -> Self::Log
+    where
+        Float: From<N>,
+    {
+        Float::cast_from(self).log(base)
     }
 
     fn pow(self, exp: Number) -> Self {
@@ -255,6 +263,7 @@ pub enum Complex {
 impl NumberInstance for Complex {
     type Abs = Float;
     type Exp = Self;
+    type Log = Self;
     type Class = ComplexType;
 
     fn class(&self) -> ComplexType {
@@ -290,6 +299,16 @@ impl NumberInstance for Complex {
         match self {
             Self::C32(c) => Self::C32(c.exp()),
             Self::C64(c) => Self::C64(c.exp()),
+        }
+    }
+
+    fn log<N: NumberInstance>(self, base: N) -> Self::Log
+    where
+        Float: From<N>,
+    {
+        match self {
+            Self::C32(c) => c.log(Float::from(base).cast_into()).into(),
+            Self::C64(c) => c.log(Float::from(base).cast_into()).into(),
         }
     }
 
@@ -695,6 +714,7 @@ pub enum Float {
 impl NumberInstance for Float {
     type Abs = Float;
     type Exp = Self;
+    type Log = Self;
     type Class = FloatType;
 
     fn class(&self) -> FloatType {
@@ -730,6 +750,16 @@ impl NumberInstance for Float {
         match self {
             Self::F32(f) => Self::F32(f.exp()),
             Self::F64(f) => Self::F64(f.exp()),
+        }
+    }
+
+    fn log<N: NumberInstance>(self, base: N) -> Self::Log
+    where
+        Float: From<N>,
+    {
+        match self {
+            Self::F32(f) => f.log(Float::from(base).cast_into()).into(),
+            Self::F64(f) => f.log(Float::from(base).cast_into()).into(),
         }
     }
 
@@ -1111,6 +1141,7 @@ pub enum Int {
 impl NumberInstance for Int {
     type Abs = Self;
     type Exp = Float;
+    type Log = Float;
     type Class = IntType;
 
     fn class(&self) -> IntType {
@@ -1164,6 +1195,14 @@ impl NumberInstance for Int {
 
     fn exp(self) -> Self::Exp {
         Float::from(self).exp()
+    }
+
+    fn log<N: NumberInstance>(self, base: N) -> Self::Log
+    where
+        Float: From<N>,
+    {
+        let this: Float = self.into();
+        this.log(base)
     }
 
     fn pow(self, exp: Number) -> Self {
@@ -1578,6 +1617,7 @@ pub enum UInt {
 impl NumberInstance for UInt {
     type Abs = Self;
     type Exp = Float;
+    type Log = Float;
     type Class = UIntType;
 
     fn class(&self) -> UIntType {
@@ -1626,6 +1666,14 @@ impl NumberInstance for UInt {
 
     fn exp(self) -> Self::Exp {
         Float::from(self).exp()
+    }
+
+    fn log<N: NumberInstance>(self, base: N) -> Self::Log
+    where
+        Float: From<N>,
+    {
+        let this: Float = self.into();
+        this.log(base)
     }
 
     fn pow(self, exp: Number) -> Self {

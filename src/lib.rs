@@ -42,10 +42,10 @@ pub use class::*;
 pub use instance::*;
 
 #[cfg(any(feature = "serde", feature = "stream"))]
-const ERR_COMPLEX: & str = "a complex number";
+const ERR_COMPLEX: &str = "a complex number";
 
 #[cfg(any(feature = "serde", feature = "stream"))]
-const ERR_NUMBER: & str = "a Number, like 1 or -2 or 3.14 or [0., -1.414]";
+const ERR_NUMBER: &str = "a Number, like 1 or -2 or 3.14 or [0., -1.414]";
 
 /// Define a [`NumberType`] for a non-[`Number`] type such as a Rust primitive.
 ///
@@ -127,6 +127,7 @@ impl Number {
 impl NumberInstance for Number {
     type Abs = Number;
     type Exp = Self;
+    type Log = Self;
     type Class = NumberType;
 
     fn class(&self) -> NumberType {
@@ -182,6 +183,17 @@ impl NumberInstance for Number {
             Self::Complex(this) => this.exp().into(),
             Self::Float(this) => this.exp().into(),
             this => Float::cast_from(this).exp().into(),
+        }
+    }
+
+    fn log<N: NumberInstance>(self, base: N) -> Self::Log
+    where
+        Float: From<N>,
+    {
+        match self {
+            Self::Complex(this) => this.log(base).into(),
+            Self::Float(this) => this.log(base).into(),
+            this => Float::cast_from(this).log(base).into(),
         }
     }
 
@@ -953,6 +965,7 @@ mod tests {
             assert_eq!(one, (one * two) - one);
             assert_eq!(two, (one * two) / one);
             assert_eq!(zero, one * zero);
+            assert_eq!(two.log(Float::cast_from(two)), one);
 
             if one.is_real() {
                 assert_eq!(one, one.pow(zero));
