@@ -979,6 +979,7 @@ mod tests {
             assert_eq!(two.ln() / two.ln(), one);
 
             if one.is_real() {
+                assert_eq!(Number::from(2 % 1), two % one);
                 assert_eq!(one, one.pow(zero));
                 assert_eq!(one * one, one.pow(two));
                 assert_eq!(two.pow(two), (one * two).pow(two));
