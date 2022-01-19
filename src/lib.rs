@@ -128,6 +128,7 @@ impl NumberInstance for Number {
     type Abs = Number;
     type Exp = Self;
     type Log = Self;
+    type Round = Self;
     type Class = NumberType;
 
     fn class(&self) -> NumberType {
@@ -228,6 +229,14 @@ impl NumberInstance for Number {
                 exp => Self::UInt(this.pow(exp)),
             },
             Self::Bool(b) => Self::Bool(b.pow(exp)),
+        }
+    }
+
+    fn round(self) -> Self::Round {
+        match self {
+            Self::Complex(c) => c.round().into(),
+            Self::Float(f) => f.round().into(),
+            other => other,
         }
     }
 }

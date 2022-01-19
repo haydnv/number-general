@@ -32,6 +32,7 @@ impl NumberInstance for Boolean {
     type Abs = Self;
     type Exp = Float;
     type Log = Float;
+    type Round = Self;
     type Class = BooleanType;
 
     fn class(&self) -> BooleanType {
@@ -79,6 +80,10 @@ impl NumberInstance for Boolean {
 
     fn or(self, other: Self) -> Self {
         Self(self.0 || other.0)
+    }
+
+    fn round(self) -> Self::Round {
+        self
     }
 
     fn xor(self, other: Self) -> Self {
@@ -268,6 +273,7 @@ impl NumberInstance for Complex {
     type Abs = Float;
     type Exp = Self;
     type Log = Self;
+    type Round = Self;
     type Class = ComplexType;
 
     fn class(&self) -> ComplexType {
@@ -340,6 +346,13 @@ impl NumberInstance for Complex {
                 Number::Float(Float::F32(exp)) => Self::C32(this.pow(exp)),
                 exp => Self::C32(this.pow(f32::cast_from(exp))),
             },
+        }
+    }
+
+    fn round(self) -> Self::Round {
+        match self {
+            Self::C32(c) => Self::C32(_Complex::new(c.re.round(), c.im.round())),
+            Self::C64(c) => Self::C64(_Complex::new(c.re.round(), c.im.round())),
         }
     }
 }
@@ -726,6 +739,7 @@ impl NumberInstance for Float {
     type Abs = Float;
     type Exp = Self;
     type Log = Self;
+    type Round = Int;
     type Class = FloatType;
 
     fn class(&self) -> FloatType {
@@ -792,6 +806,13 @@ impl NumberInstance for Float {
                 Number::Float(Float::F64(exp)) => Self::F64(f64::from(self).pow(exp)),
                 exp => this.pow(f32::cast_from(exp)).into(),
             },
+        }
+    }
+
+    fn round(self) -> Self::Round {
+        match self {
+            Self::F32(f) => (f.round() as i32).into(),
+            Self::F64(f) => (f.round() as i64).into(),
         }
     }
 }
@@ -1160,6 +1181,7 @@ impl NumberInstance for Int {
     type Abs = Self;
     type Exp = Float;
     type Log = Float;
+    type Round = Self;
     type Class = IntType;
 
     fn class(&self) -> IntType {
@@ -1238,6 +1260,10 @@ impl NumberInstance for Int {
             Self::I32(this) => Self::I32(this.pow(exp.cast_into())),
             Self::I64(this) => Self::I64(this.pow(exp.cast_into())),
         }
+    }
+
+    fn round(self) -> Self::Round {
+        self
     }
 }
 
@@ -1640,6 +1666,7 @@ impl NumberInstance for UInt {
     type Abs = Self;
     type Exp = Float;
     type Log = Float;
+    type Round = Self;
     type Class = UIntType;
 
     fn class(&self) -> UIntType {
@@ -1713,6 +1740,10 @@ impl NumberInstance for UInt {
             Self::U32(this) => Self::U32(this.pow(exp.cast_into())),
             Self::U64(this) => Self::U64(this.pow(exp.cast_into())),
         }
+    }
+
+    fn round(self) -> Self::Round {
+        self
     }
 }
 

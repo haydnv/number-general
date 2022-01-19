@@ -60,6 +60,7 @@ pub trait NumberInstance:
     type Abs: NumberInstance;
     type Exp: NumberInstance;
     type Log: NumberInstance;
+    type Round: NumberInstance;
     type Class: NumberClass<Instance = Self>;
 
     /// Get an impl of [`NumberClass`] describing this number.
@@ -117,6 +118,9 @@ pub trait NumberInstance:
         let that = Boolean::cast_from(other);
         this.or(that).into()
     }
+
+    /// Return this number rounded to the nearest integer.
+    fn round(self) -> Self::Round;
 
     /// Return `true` if exactly one of `self` and `other` is zero.
     fn xor(self, other: Self) -> Self
