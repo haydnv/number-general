@@ -954,6 +954,16 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_log() {
+        let n = 1.23f32;
+        assert_eq!(n.ln(), Number::from(n).ln().cast_into());
+        assert_eq!(
+            (-n).ln().is_nan(),
+            f32::cast_from(Number::from(-n).ln()).is_nan()
+        );
+    }
+
+    #[test]
     fn test_ops() {
         let ones = [
             Number::from(true),
