@@ -26,7 +26,7 @@ use std::iter::{Product, Sum};
 use std::ops::*;
 use std::str::FromStr;
 
-use collate::*;
+use collate::{Collate, Collator};
 use safecast::{CastFrom, CastInto};
 
 mod class;

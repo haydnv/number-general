@@ -1143,7 +1143,10 @@ impl fmt::Display for Float {
 
 /// Defines a collation order for [`Float`].
 #[derive(Default, Clone)]
-pub struct FloatCollator;
+pub struct FloatCollator {
+    f32: collate::FloatCollator<f32>,
+    f64: collate::FloatCollator<f64>,
+}
 
 impl Collate for FloatCollator {
     type Value = Float;
@@ -1152,17 +1155,10 @@ impl Collate for FloatCollator {
         if let Some(order) = left.partial_cmp(right) {
             order
         } else {
-            let left = f32::cast_from(*left);
-            let right = f32::cast_from(*right);
-
-            if left == right {
-                Ordering::Equal
-            } else if left == f32::NEG_INFINITY || right == f32::INFINITY {
-                Ordering::Less
-            } else if left == f32::INFINITY || right == f32::NEG_INFINITY {
-                Ordering::Greater
-            } else {
-                panic!("no collation defined between {} and {}", left, right)
+            match (left, right) {
+                (Float::F32(l), Float::F32(r)) => self.f32.compare(l.into(), r.into()),
+                (Float::F64(l), Float::F64(r)) => self.f64.compare(l.into(), r.into()),
+                (l, r) => self.f64.compare(&(*l).cast_into(), &(*r).cast_into()),
             }
         }
     }
