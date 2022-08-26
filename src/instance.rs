@@ -300,8 +300,8 @@ impl NumberInstance for Complex {
 
     fn abs(self) -> Float {
         match self {
-            Self::C32(c) => Float::F32(c.norm_sqr()),
-            Self::C64(c) => Float::F64(c.norm_sqr()),
+            Self::C32(c) => Float::F32(c.norm_sqr().sqrt()),
+            Self::C64(c) => Float::F64(c.norm_sqr().sqrt()),
         }
     }
 
