@@ -269,6 +269,22 @@ pub enum Complex {
     C64(_Complex<f64>),
 }
 
+impl Complex {
+    pub fn im(&self) -> Float {
+        match self {
+            Self::C32(c) => Float::F32(c.im),
+            Self::C64(c) => Float::F64(c.im),
+        }
+    }
+
+    pub fn re(&self) -> Float {
+        match self {
+            Self::C32(c) => Float::F32(c.re),
+            Self::C64(c) => Float::F64(c.re),
+        }
+    }
+}
+
 impl NumberInstance for Complex {
     type Abs = Float;
     type Exp = Self;

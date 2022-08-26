@@ -954,6 +954,13 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_complex() {
+        let n = Complex::from([1.23, -3.14]);
+        assert_eq!(n.re(), Float::from(1.23));
+        assert_eq!(n.im(), Float::from(-3.14));
+    }
+
+    #[test]
     fn test_log() {
         let n = 1.23f32;
         assert_eq!(n.ln(), Number::from(n).ln().cast_into());

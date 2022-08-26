@@ -1,6 +1,6 @@
 [package]
 name = "number-general"
-version = "0.8.1"
+version = "0.8.2"
 authors = ["haydn@tinychain.net"]
 edition = "2018"
 description = "A generic number type for Rust which supports basic math and (de)serialization."
