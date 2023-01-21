@@ -270,6 +270,7 @@ pub enum Complex {
 }
 
 impl Complex {
+    /// Borrow the imaginary part of this [`Complex`] number
     pub fn im(&self) -> Float {
         match self {
             Self::C32(c) => Float::F32(c.im),
@@ -277,6 +278,7 @@ impl Complex {
         }
     }
 
+    /// Borrow the real part of this [`Complex`] number
     pub fn re(&self) -> Float {
         match self {
             Self::C32(c) => Float::F32(c.re),
@@ -864,7 +866,7 @@ impl Add for Float {
             (Self::F32(l), Self::F32(r)) => Self::F32(l + r),
             (Self::F64(l), Self::F64(r)) => Self::F64(l + r),
             (Self::F64(l), Self::F32(r)) => Self::F64(l + r as f64),
-            (l, r) => (r + l),
+            (l, r) => r + l,
         }
     }
 }
@@ -936,7 +938,7 @@ impl Mul for Float {
             (Self::F32(l), Self::F32(r)) => Self::F32(l * r),
             (Self::F64(l), Self::F64(r)) => Self::F64(l * r),
             (Self::F64(l), Self::F32(r)) => Self::F64(l * r as f64),
-            (l, r) => (r * l),
+            (l, r) => r * l,
         }
     }
 }

@@ -302,46 +302,4 @@ impl<'en> IntoStream<'en> for Number {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use bytes::Bytes;
-    use futures::executor::block_on;
-    use futures::future::{self, FutureExt};
-    use futures::stream::{self, StreamExt};
-
-    use super::*;
-
-    #[test]
-    fn test_encode() {
-        let numbers = vec![
-            Number::from(false),
-            Number::from(12u16),
-            Number::from(-3),
-            Number::from(3.14),
-            Number::from(1e-6),
-            Number::from(_Complex::<f32>::new(0., -1.414)),
-        ];
-
-        let encoded = destream_json::encode(&numbers)
-            .unwrap()
-            .map(|r| r.unwrap())
-            .fold(vec![], |mut s, c| {
-                s.extend(c);
-                future::ready(s)
-            })
-            .map(Bytes::from);
-
-        let deserialized: Vec<Number> =
-            block_on(destream_json::decode((), stream::once(encoded))).unwrap();
-
-        assert_eq!(deserialized, numbers);
-
-        let fp: f64 = block_on(destream_json::decode(
-            (),
-            stream::once(future::ready(Bytes::copy_from_slice(b"1e-6"))),
-        ))
-        .unwrap();
-
-        assert_eq!(fp, 1e-6);
-    }
-}
+// Tests for this module are implemented as part of the "value" feature of the destream_json crate

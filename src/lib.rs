@@ -114,6 +114,24 @@ pub enum Number {
 }
 
 impl Number {
+    /// Return `true` if this is floating-point [`Number`], `false` if this is an integer.
+    pub fn is_float(&self) -> bool {
+        match self {
+            Self::Complex(_) => true,
+            Self::Float(_) => true,
+            _ => false,
+        }
+    }
+
+    /// Return `true` if this is an [`Int`] or [`UInt`].
+    pub fn is_int(&self) -> bool {
+        match self {
+            Self::Int(_) => true,
+            Self::UInt(_) => true,
+            _ => false,
+        }
+    }
+
     /// Return `false` if this is a [`Complex`] `Number`.
     pub fn is_real(&self) -> bool {
         if let Self::Complex(_) = self {

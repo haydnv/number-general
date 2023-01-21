@@ -1,5 +1,4 @@
-use async_hash::Hash;
-use sha2::digest::{Digest, Output};
+use async_hash::{Digest, Hash, Output};
 
 use super::{Boolean, Complex, Float, Int, Number, UInt};
 

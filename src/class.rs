@@ -179,14 +179,17 @@ pub trait RealInstance: PartialEq + PartialOrd + Sized {
     const ONE: Self;
     const ZERO: Self;
 
+    /// Return `true` if this is zero or a positive number.
     fn is_positive(&self) -> bool {
         self >= &Self::ZERO
     }
 
+    /// Return `true` if this is a negative number.
     fn is_negative(&self) -> bool {
         self < &Self::ZERO
     }
 
+    /// Return `true` if this is zero.
     fn is_zero(&self) -> bool {
         self == &Self::ZERO
     }
