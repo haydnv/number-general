@@ -6,6 +6,8 @@ use std::ops::*;
 use std::str::FromStr;
 
 use collate::Collate;
+use get_size::GetSize;
+use get_size_derive::*;
 use num::traits::Pow;
 use safecast::*;
 
@@ -17,6 +19,12 @@ const ERR_COMPLEX_POWER: &str = "complex exponent is not yet supported";
 /// A boolean value.
 #[derive(Clone, Copy, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Boolean(bool);
+
+impl GetSize for Boolean {
+    fn get_size(&self) -> usize {
+        1
+    }
+}
 
 impl Boolean {
     fn as_radians(self) -> f32 {
@@ -267,6 +275,15 @@ impl fmt::Display for Boolean {
 pub enum Complex {
     C32(_Complex<f32>),
     C64(_Complex<f64>),
+}
+
+impl GetSize for Complex {
+    fn get_size(&self) -> usize {
+        match self {
+            Self::C32(c) => c.re.get_size() + c.im.get_size(),
+            Self::C64(c) => c.re.get_size() + c.im.get_size(),
+        }
+    }
 }
 
 impl Complex {
@@ -747,7 +764,7 @@ impl Collate for ComplexCollator {
 }
 
 /// A floating-point number.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, GetSize)]
 pub enum Float {
     F32(f32),
     F64(f64),
@@ -1183,7 +1200,7 @@ impl Collate for FloatCollator {
 }
 
 /// A signed integer.
-#[derive(Clone, Copy, Hash)]
+#[derive(Clone, Copy, Hash, GetSize)]
 pub enum Int {
     I8(i8),
     I16(i16),
@@ -1668,7 +1685,7 @@ impl fmt::Display for Int {
 }
 
 /// An unsigned integer.
-#[derive(Clone, Copy, Hash)]
+#[derive(Clone, Copy, Hash, GetSize)]
 pub enum UInt {
     U8(u8),
     U16(u16),

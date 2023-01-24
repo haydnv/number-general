@@ -27,6 +27,8 @@ use std::ops::*;
 use std::str::FromStr;
 
 use collate::{Collate, Collator};
+use get_size::GetSize;
+use get_size_derive::*;
 use safecast::{CastFrom, CastInto};
 
 mod class;
@@ -104,7 +106,7 @@ impl fmt::Display for Error {
 type _Complex<T> = num::complex::Complex<T>;
 
 /// A generic number.
-#[derive(Clone, Copy, Eq, Hash)]
+#[derive(Clone, Copy, Eq, Hash, GetSize)]
 pub enum Number {
     Bool(Boolean),
     Complex(Complex),
