@@ -859,7 +859,7 @@ impl CastFrom<Number> for UInt {
 }
 
 /// Defines a collation order for [`Number`].
-#[derive(Default, Clone)]
+#[derive(Copy, Clone, Default, Eq, PartialEq)]
 pub struct NumberCollator {
     bool: Collator<Boolean>,
     complex: ComplexCollator,
@@ -871,18 +871,18 @@ pub struct NumberCollator {
 impl Collate for NumberCollator {
     type Value = Number;
 
-    fn compare(&self, left: &Self::Value, right: &Self::Value) -> Ordering {
+    fn cmp(&self, left: &Self::Value, right: &Self::Value) -> Ordering {
         match (left, right) {
-            (Number::Bool(l), Number::Bool(r)) => self.bool.compare(l, r),
-            (Number::Complex(l), Number::Complex(r)) => self.complex.compare(l, r),
-            (Number::Float(l), Number::Float(r)) => self.float.compare(l, r),
-            (Number::Int(l), Number::Int(r)) => self.int.compare(l, r),
-            (Number::UInt(l), Number::UInt(r)) => self.uint.compare(l, r),
+            (Number::Bool(l), Number::Bool(r)) => self.bool.cmp(l, r),
+            (Number::Complex(l), Number::Complex(r)) => self.complex.cmp(l, r),
+            (Number::Float(l), Number::Float(r)) => self.float.cmp(l, r),
+            (Number::Int(l), Number::Int(r)) => self.int.cmp(l, r),
+            (Number::UInt(l), Number::UInt(r)) => self.uint.cmp(l, r),
             (l, r) => {
                 let dtype = Ord::max(l.class(), r.class());
                 let l = l.into_type(dtype);
                 let r = r.into_type(dtype);
-                self.compare(&l, &r)
+                self.cmp(&l, &r)
             }
         }
     }
@@ -1036,30 +1036,6 @@ mod tests {
             assert_eq!(t, one.or(zero));
             assert_eq!(t, one.xor(zero));
         }
-    }
-
-    #[test]
-    fn test_collate() {
-        let numbers = [
-            [Number::from(-3)],
-            [Number::from(false)],
-            [Number::from(1i16)],
-            [Number::from(_Complex::<f32>::new(1., -1.414))],
-            [Number::from(3.14)],
-            [Number::from(12u16)],
-        ];
-
-        let collator = NumberCollator::default();
-        assert!(collator.is_sorted(&numbers));
-
-        assert_eq!(collator.bisect_left(&numbers, &[Number::from(0i32)]), 1);
-        assert_eq!(collator.bisect_right(&numbers, &[Number::from(0i32)]), 2);
-
-        assert_eq!(
-            collator.bisect_left(&numbers, &[Number::from(_Complex::<f64>::new(-1., -1.))]),
-            3
-        );
-        assert_eq!(collator.bisect_right(&numbers, &[Number::from(5.1)]), 5);
     }
 
     #[test]

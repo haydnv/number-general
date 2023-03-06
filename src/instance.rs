@@ -750,7 +750,7 @@ impl fmt::Display for Complex {
 }
 
 /// Defines a collation order for [`Complex`].
-#[derive(Default, Clone)]
+#[derive(Copy, Clone, Default, Eq, PartialEq)]
 pub struct ComplexCollator {
     float: FloatCollator,
 }
@@ -758,8 +758,8 @@ pub struct ComplexCollator {
 impl Collate for ComplexCollator {
     type Value = Complex;
 
-    fn compare(&self, left: &Self::Value, right: &Self::Value) -> Ordering {
-        self.float.compare(&left.abs(), &right.abs())
+    fn cmp(&self, left: &Self::Value, right: &Self::Value) -> Ordering {
+        self.float.cmp(&left.abs(), &right.abs())
     }
 }
 
@@ -1176,24 +1176,54 @@ impl fmt::Display for Float {
     }
 }
 
+#[derive(Copy, Clone, Default, Eq, PartialEq)]
+struct F32Collator;
+
+impl Collate for F32Collator {
+    type Value = f32;
+
+    fn cmp(&self, left: &f32, right: &f32) -> Ordering {
+        if left == right {
+            Ordering::Equal
+        } else {
+            left.total_cmp(right)
+        }
+    }
+}
+
+#[derive(Copy, Clone, Default, Eq, PartialEq)]
+struct F64Collator;
+
+impl Collate for F64Collator {
+    type Value = f64;
+
+    fn cmp(&self, left: &f64, right: &f64) -> Ordering {
+        if left == right {
+            Ordering::Equal
+        } else {
+            left.total_cmp(right)
+        }
+    }
+}
+
 /// Defines a collation order for [`Float`].
-#[derive(Default, Clone)]
+#[derive(Copy, Clone, Default, Eq, PartialEq)]
 pub struct FloatCollator {
-    f32: collate::FloatCollator<f32>,
-    f64: collate::FloatCollator<f64>,
+    f32: F32Collator,
+    f64: F64Collator,
 }
 
 impl Collate for FloatCollator {
     type Value = Float;
 
-    fn compare(&self, left: &Self::Value, right: &Self::Value) -> Ordering {
+    fn cmp(&self, left: &Self::Value, right: &Self::Value) -> Ordering {
         if let Some(order) = left.partial_cmp(right) {
             order
         } else {
             match (left, right) {
-                (Float::F32(l), Float::F32(r)) => self.f32.compare(l.into(), r.into()),
-                (Float::F64(l), Float::F64(r)) => self.f64.compare(l.into(), r.into()),
-                (l, r) => self.f64.compare(&(*l).cast_into(), &(*r).cast_into()),
+                (Float::F32(l), Float::F32(r)) => self.f32.cmp(l.into(), r.into()),
+                (Float::F64(l), Float::F64(r)) => self.f64.cmp(l.into(), r.into()),
+                (l, r) => self.f64.cmp(&(*l).cast_into(), &(*r).cast_into()),
             }
         }
     }
