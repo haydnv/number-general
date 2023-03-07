@@ -953,7 +953,7 @@ impl NumberVisitor {
 
 impl fmt::Debug for Number {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}: {}", self.class(), self)
+        write!(f, "{} ({})", self, self.class())
     }
 }
 

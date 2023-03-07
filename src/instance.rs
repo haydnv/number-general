@@ -16,6 +16,16 @@ use super::{Error, Number, _Complex};
 
 const ERR_COMPLEX_POWER: &str = "complex exponent is not yet supported";
 
+macro_rules! fmt_debug {
+    ($t:ty) => {
+        impl fmt::Debug for $t {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                write!(f, "{} ({})", self, self.class())
+            }
+        }
+    };
+}
+
 /// A boolean value.
 #[derive(Clone, Copy, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Boolean(bool);
@@ -258,11 +268,7 @@ impl CastFrom<Boolean> for u64 {
     }
 }
 
-impl fmt::Debug for Boolean {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}: {}", self.class(), self)
-    }
-}
+fmt_debug!(Boolean);
 
 impl fmt::Display for Boolean {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -734,11 +740,7 @@ impl FromStr for Complex {
     }
 }
 
-impl fmt::Debug for Complex {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}: {}", self.class(), self)
-    }
-}
+fmt_debug!(Complex);
 
 impl fmt::Display for Complex {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -1161,11 +1163,7 @@ impl From<Float> for f64 {
     }
 }
 
-impl fmt::Debug for Float {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}: {}", self.class(), self)
-    }
-}
+fmt_debug!(Float);
 
 impl fmt::Display for Float {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -1697,11 +1695,7 @@ impl FromStr for Int {
     }
 }
 
-impl fmt::Debug for Int {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}: {}", self.class(), self)
-    }
-}
+fmt_debug!(Int);
 
 impl fmt::Display for Int {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -2209,11 +2203,7 @@ impl FromStr for UInt {
     }
 }
 
-impl fmt::Debug for UInt {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}: {}", self.class(), self)
-    }
-}
+fmt_debug!(UInt);
 
 impl fmt::Display for UInt {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
