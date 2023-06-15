@@ -740,6 +740,24 @@ impl FromStr for Complex {
     }
 }
 
+impl From<Complex> for (Float, Float) {
+    fn from(n: Complex) -> Self {
+        match n {
+            Complex::C32(n) => (Float::F32(n.re), Float::F32(n.im)),
+            Complex::C64(n) => (Float::F64(n.re), Float::F64(n.im)),
+        }
+    }
+}
+
+impl From<Complex> for [Float; 2] {
+    fn from(n: Complex) -> Self {
+        match n {
+            Complex::C32(n) => [Float::F32(n.re), Float::F32(n.im)],
+            Complex::C64(n) => [Float::F64(n.re), Float::F64(n.im)],
+        }
+    }
+}
+
 fmt_debug!(Complex);
 
 impl fmt::Display for Complex {
