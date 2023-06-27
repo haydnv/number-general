@@ -224,8 +224,8 @@ impl NumberClass for ComplexType {
 
     fn cast(&self, n: Number) -> Complex {
         match self {
-            Self::C32 => Complex::C32(n.cast_into()),
-            _ => Complex::C64(n.cast_into()),
+            Self::C64 => Complex::C64(n.cast_into()),
+            _ => Complex::C32(n.cast_into()),
         }
     }
 
@@ -377,8 +377,8 @@ impl NumberClass for FloatType {
 
     fn cast(&self, n: Number) -> Float {
         match self {
-            Self::F32 => Float::F32(n.cast_into()),
-            _ => Float::F64(n.cast_into()),
+            Self::F64 => Float::F64(n.cast_into()),
+            _ => Float::F32(n.cast_into()),
         }
     }
 
@@ -474,9 +474,10 @@ impl NumberClass for IntType {
 
     fn cast(&self, n: Number) -> Int {
         match self {
+            Self::I8 => Int::I8(n.cast_into()),
             Self::I16 => Int::I16(n.cast_into()),
-            Self::I32 => Int::I32(n.cast_into()),
-            _ => Int::I64(n.cast_into()),
+            Self::Int | Self::I32 => Int::I32(n.cast_into()),
+            Self::I64 => Int::I64(n.cast_into()),
         }
     }
 
@@ -587,8 +588,8 @@ impl NumberClass for UIntType {
         match self {
             Self::U8 => UInt::U8(n.cast_into()),
             Self::U16 => UInt::U16(n.cast_into()),
-            Self::U32 => UInt::U32(n.cast_into()),
-            _ => UInt::U64(n.cast_into()),
+            Self::UInt | Self::U32 => UInt::U32(n.cast_into()),
+            Self::U64 => UInt::U64(n.cast_into()),
         }
     }
 

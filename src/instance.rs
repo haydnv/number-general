@@ -1383,6 +1383,17 @@ impl CastFrom<Int> for Boolean {
     }
 }
 
+impl CastFrom<Int> for i8 {
+    fn cast_from(i: Int) -> i8 {
+        match i {
+            Int::I8(i) => i,
+            Int::I16(i) => i as i8,
+            Int::I32(i) => i as i8,
+            Int::I64(i) => i as i8,
+        }
+    }
+}
+
 impl CastFrom<Int> for i16 {
     fn cast_from(i: Int) -> i16 {
         match i {

@@ -784,6 +784,12 @@ impl CastFrom<Number> for Float {
     }
 }
 
+impl CastFrom<Number> for i8 {
+    fn cast_from(n: Number) -> i8 {
+        Int::cast_from(n).cast_into()
+    }
+}
+
 impl CastFrom<Number> for i16 {
     fn cast_from(n: Number) -> i16 {
         Int::cast_from(n).cast_into()
@@ -983,7 +989,7 @@ mod tests {
     #[test]
     fn test_log() {
         let n = 1.23f32;
-        assert_eq!(n.ln(), Number::from(n).ln().cast_into());
+        assert_eq!(n.ln(), f32::cast_from(Number::from(n).ln()));
         assert_eq!(
             (-n).ln().is_nan(),
             f32::cast_from(Number::from(-n).ln()).is_nan()
