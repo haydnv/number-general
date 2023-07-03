@@ -25,7 +25,7 @@ futures = { version = "0.3", optional = true }
 get-size = "0.1"
 get-size-derive = "0.1"
 num = "0.4"
-safecast = { path = "../safecast" }
+safecast = "0.2"
 serde = { version = "1.0", features = ["derive"], optional = true }
 
 [dev-dependencies]
