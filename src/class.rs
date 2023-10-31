@@ -706,6 +706,17 @@ impl Default for NumberType {
 impl NumberClass for NumberType {
     type Instance = Number;
 
+    fn is_complex(&self) -> bool {
+        match self {
+            Self::Bool => BooleanType.is_complex(),
+            Self::Complex(ct) => ct.is_complex(),
+            Self::Float(ft) => ft.is_complex(),
+            Self::Int(it) => it.is_complex(),
+            Self::UInt(ut) => ut.is_complex(),
+            Self::Number => false,
+        }
+    }
+
     fn cast(&self, n: Number) -> Number {
         match self {
             Self::Bool => Number::Bool(n.cast_into()),
