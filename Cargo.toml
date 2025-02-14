@@ -1,6 +1,6 @@
 [package]
 name = "number-general"
-version = "0.12.0"
+version = "0.13.0"
 authors = ["code@tinychain.net"]
 edition = "2021"
 description = "A generic number type for Rust which supports basic math and (de)serialization."
@@ -29,5 +29,5 @@ safecast = "0.2"
 serde = { version = "1.0", features = ["derive"], optional = true }
 
 [dev-dependencies]
-bytes = "1.7"
+bytes = "1.10"
 serde_json = "1.0"
